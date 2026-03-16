@@ -30,6 +30,10 @@ import type {
   HealthStatus,
   Interview,
   Job,
+  ScheduleInfo,
+  SubmitScheduleBody,
+  SubmitScheduleResponse,
+  TriggerInvitesResponse,
   UpdateCandidate,
   UpdateInterview,
   User,
@@ -904,6 +908,271 @@ export const useDeleteJob = <
   TContext
 > => {
   return useMutation(getDeleteJobMutationOptions(options));
+};
+
+/**
+ * @summary Trigger interview invites for all PENDING candidates
+ */
+export const getTriggerInterviewInvitesUrl = (id: number) => {
+  return `/api/jobs/${id}/trigger-invites`;
+};
+
+export const triggerInterviewInvites = async (
+  id: number,
+  options?: RequestInit,
+): Promise<TriggerInvitesResponse> => {
+  return customFetch<TriggerInvitesResponse>(
+    getTriggerInterviewInvitesUrl(id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getTriggerInterviewInvitesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof triggerInterviewInvites>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof triggerInterviewInvites>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["triggerInterviewInvites"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof triggerInterviewInvites>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return triggerInterviewInvites(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TriggerInterviewInvitesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof triggerInterviewInvites>>
+>;
+
+export type TriggerInterviewInvitesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Trigger interview invites for all PENDING candidates
+ */
+export const useTriggerInterviewInvites = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof triggerInterviewInvites>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof triggerInterviewInvites>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getTriggerInterviewInvitesMutationOptions(options));
+};
+
+/**
+ * @summary Get candidate and job info for scheduling
+ */
+export const getGetScheduleInfoUrl = (candidateId: number) => {
+  return `/api/schedule/${candidateId}`;
+};
+
+export const getScheduleInfo = async (
+  candidateId: number,
+  options?: RequestInit,
+): Promise<ScheduleInfo> => {
+  return customFetch<ScheduleInfo>(getGetScheduleInfoUrl(candidateId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetScheduleInfoQueryKey = (candidateId: number) => {
+  return [`/api/schedule/${candidateId}`] as const;
+};
+
+export const getGetScheduleInfoQueryOptions = <
+  TData = Awaited<ReturnType<typeof getScheduleInfo>>,
+  TError = ErrorType<unknown>,
+>(
+  candidateId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getScheduleInfo>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetScheduleInfoQueryKey(candidateId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getScheduleInfo>>> = ({
+    signal,
+  }) => getScheduleInfo(candidateId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!candidateId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getScheduleInfo>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetScheduleInfoQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getScheduleInfo>>
+>;
+export type GetScheduleInfoQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get candidate and job info for scheduling
+ */
+
+export function useGetScheduleInfo<
+  TData = Awaited<ReturnType<typeof getScheduleInfo>>,
+  TError = ErrorType<unknown>,
+>(
+  candidateId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getScheduleInfo>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetScheduleInfoQueryOptions(candidateId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit interview schedule
+ */
+export const getSubmitScheduleUrl = (candidateId: number) => {
+  return `/api/schedule/${candidateId}`;
+};
+
+export const submitSchedule = async (
+  candidateId: number,
+  submitScheduleBody: SubmitScheduleBody,
+  options?: RequestInit,
+): Promise<SubmitScheduleResponse> => {
+  return customFetch<SubmitScheduleResponse>(
+    getSubmitScheduleUrl(candidateId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(submitScheduleBody),
+    },
+  );
+};
+
+export const getSubmitScheduleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitSchedule>>,
+    TError,
+    { candidateId: number; data: BodyType<SubmitScheduleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitSchedule>>,
+  TError,
+  { candidateId: number; data: BodyType<SubmitScheduleBody> },
+  TContext
+> => {
+  const mutationKey = ["submitSchedule"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitSchedule>>,
+    { candidateId: number; data: BodyType<SubmitScheduleBody> }
+  > = (props) => {
+    const { candidateId, data } = props ?? {};
+
+    return submitSchedule(candidateId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitScheduleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitSchedule>>
+>;
+export type SubmitScheduleMutationBody = BodyType<SubmitScheduleBody>;
+export type SubmitScheduleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit interview schedule
+ */
+export const useSubmitSchedule = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitSchedule>>,
+    TError,
+    { candidateId: number; data: BodyType<SubmitScheduleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitSchedule>>,
+  TError,
+  { candidateId: number; data: BodyType<SubmitScheduleBody> },
+  TContext
+> => {
+  return useMutation(getSubmitScheduleMutationOptions(options));
 };
 
 /**

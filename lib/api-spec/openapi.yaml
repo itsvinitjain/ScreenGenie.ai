@@ -201,6 +201,65 @@ paths:
       responses:
         "204":
           description: Deleted
+  /jobs/{id}/trigger-invites:
+    post:
+      operationId: triggerInterviewInvites
+      tags: [jobs]
+      summary: Trigger interview invites for all PENDING candidates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invites triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriggerInvitesResponse"
+  /schedule/{candidateId}:
+    get:
+      operationId: getScheduleInfo
+      tags: [candidates]
+      summary: Get candidate and job info for scheduling
+      parameters:
+        - name: candidateId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Schedule info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleInfo"
+    post:
+      operationId: submitSchedule
+      tags: [candidates]
+      summary: Submit interview schedule
+      parameters:
+        - name: candidateId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitScheduleBody"
+      responses:
+        "201":
+          description: Interview scheduled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitScheduleResponse"
   /candidates/bulk:
     post:
       operationId: bulkCreateCandidates
@@ -617,6 +676,62 @@ components:
         feedback:
           type: string
           nullable: true
+    TriggerInvitesResponse:
+      type: object
+      properties:
+        invited:
+          type: integer
+        emailsSent:
+          type: array
+          items:
+            type: string
+      required:
+        - invited
+        - emailsSent
+    ScheduleInfo:
+      type: object
+      properties:
+        candidateId:
+          type: integer
+        candidateName:
+          type: string
+        candidateEmail:
+          type: string
+        jobTitle:
+          type: string
+        jobDescription:
+          type: string
+        status:
+          type: string
+      required:
+        - candidateId
+        - candidateName
+        - candidateEmail
+        - jobTitle
+        - jobDescription
+        - status
+    SubmitScheduleBody:
+      type: object
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+      required:
+        - scheduledAt
+    SubmitScheduleResponse:
+      type: object
+      properties:
+        interviewId:
+          type: integer
+        scheduledAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+      required:
+        - interviewId
+        - scheduledAt
+        - message
     BulkCandidateItem:
       type: object
       properties:

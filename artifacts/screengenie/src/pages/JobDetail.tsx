@@ -4,7 +4,9 @@ import {
   useGetJob,
   useGetCandidates,
   useBulkCreateCandidates,
+  useTriggerInterviewInvites,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +21,7 @@ import {
   Mail,
   Phone,
   Star,
+  Send,
 } from "lucide-react";
 import { format } from "date-fns";
 import Papa from "papaparse";
@@ -43,6 +46,8 @@ export default function JobDetail() {
     { query: { enabled: !!jobId } }
   );
   const bulkCreate = useBulkCreateCandidates();
+  const triggerInvites = useTriggerInterviewInvites();
+  const queryClient = useQueryClient();
 
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [csvError, setCsvError] = useState<string | null>(null);
@@ -51,7 +56,27 @@ export default function JobDetail() {
     imported: number;
     failed: number;
   } | null>(null);
+  const [inviteResult, setInviteResult] = useState<{
+    invited: number;
+    emails: string[];
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleTriggerInvites = () => {
+    if (!jobId) return;
+    setInviteResult(null);
+    triggerInvites.mutate(
+      { id: jobId },
+      {
+        onSuccess: (data) => {
+          setInviteResult({ invited: data.invited, emails: data.emailsSent });
+          queryClient.invalidateQueries({ queryKey: ["/api/candidates"] });
+        },
+      }
+    );
+  };
+
+  const pendingCount = candidates?.filter((c) => c.status === "PENDING").length || 0;
 
   const parseCsvFile = useCallback((file: File) => {
     setCsvError(null);
@@ -428,6 +453,33 @@ export default function JobDetail() {
           )}
         </div>
 
+        {inviteResult && inviteResult.invited > 0 && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-900">
+                {inviteResult.invited} candidate(s) invited!
+              </p>
+              <p className="text-xs text-emerald-700 mt-1">
+                Emails sent to: {inviteResult.emails.join(", ")}
+              </p>
+            </div>
+            <button onClick={() => setInviteResult(null)} className="ml-auto p-1 text-emerald-600 hover:text-emerald-800">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {inviteResult && inviteResult.invited === 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-sm text-amber-800">No pending candidates to invite.</p>
+            <button onClick={() => setInviteResult(null)} className="ml-auto p-1 text-amber-600 hover:text-amber-800">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -438,6 +490,16 @@ export default function JobDetail() {
                 Candidates ({candidates?.length || 0})
               </h2>
             </div>
+            <Button
+              onClick={handleTriggerInvites}
+              disabled={triggerInvites.isPending || pendingCount === 0}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
+            >
+              <Send className="w-4 h-4" />
+              {triggerInvites.isPending
+                ? "Sending..."
+                : `Trigger Interview Invites${pendingCount > 0 ? ` (${pendingCount})` : ""}`}
+            </Button>
           </div>
 
           <div className="overflow-x-auto">

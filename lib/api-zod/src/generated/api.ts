@@ -158,6 +158,45 @@ export const DeleteJobParams = zod.object({
 });
 
 /**
+ * @summary Trigger interview invites for all PENDING candidates
+ */
+export const TriggerInterviewInvitesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const TriggerInterviewInvitesResponse = zod.object({
+  invited: zod.number(),
+  emailsSent: zod.array(zod.string()),
+});
+
+/**
+ * @summary Get candidate and job info for scheduling
+ */
+export const GetScheduleInfoParams = zod.object({
+  candidateId: zod.coerce.number(),
+});
+
+export const GetScheduleInfoResponse = zod.object({
+  candidateId: zod.number(),
+  candidateName: zod.string(),
+  candidateEmail: zod.string(),
+  jobTitle: zod.string(),
+  jobDescription: zod.string(),
+  status: zod.string(),
+});
+
+/**
+ * @summary Submit interview schedule
+ */
+export const SubmitScheduleParams = zod.object({
+  candidateId: zod.coerce.number(),
+});
+
+export const SubmitScheduleBody = zod.object({
+  scheduledAt: zod.date(),
+});
+
+/**
  * @summary Bulk import candidates from CSV
  */
 export const BulkCreateCandidatesBody = zod.object({

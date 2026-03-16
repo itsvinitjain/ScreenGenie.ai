@@ -1,0 +1,126 @@
+import { Router, type IRouter } from "express";
+import { eq } from "drizzle-orm";
+import { db, candidatesTable, jobsTable, interviewsTable } from "@workspace/db";
+import {
+  GetScheduleInfoParams,
+  GetScheduleInfoResponse,
+  SubmitScheduleParams,
+  SubmitScheduleBody,
+} from "@workspace/api-zod";
+
+const router: IRouter = Router();
+
+router.get("/schedule/:candidateId", async (req, res): Promise<void> => {
+  const params = GetScheduleInfoParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [candidate] = await db
+    .select()
+    .from(candidatesTable)
+    .where(eq(candidatesTable.id, params.data.candidateId));
+
+  if (!candidate) {
+    res.status(404).json({ error: "Candidate not found" });
+    return;
+  }
+
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, candidate.jobId));
+
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  res.json(
+    GetScheduleInfoResponse.parse({
+      candidateId: candidate.id,
+      candidateName: candidate.name,
+      candidateEmail: candidate.email,
+      jobTitle: job.title,
+      jobDescription: job.description,
+      status: candidate.status,
+    })
+  );
+});
+
+router.post("/schedule/:candidateId", async (req, res): Promise<void> => {
+  const params = SubmitScheduleParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const coercedBody = {
+    ...req.body,
+    scheduledAt: req.body.scheduledAt ? new Date(req.body.scheduledAt) : undefined,
+  };
+  const parsed = SubmitScheduleBody.safeParse(coercedBody);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [candidate] = await db
+    .select()
+    .from(candidatesTable)
+    .where(eq(candidatesTable.id, params.data.candidateId));
+
+  if (!candidate) {
+    res.status(404).json({ error: "Candidate not found" });
+    return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(interviewsTable)
+    .where(eq(interviewsTable.candidateId, candidate.id));
+
+  if (existing) {
+    const [updated] = await db
+      .update(interviewsTable)
+      .set({ scheduledAt: parsed.data.scheduledAt, status: "SCHEDULED" })
+      .where(eq(interviewsTable.id, existing.id))
+      .returning();
+
+    await db
+      .update(candidatesTable)
+      .set({ status: "SCHEDULED" })
+      .where(eq(candidatesTable.id, candidate.id));
+
+    res.status(201).json({
+      interviewId: updated.id,
+      scheduledAt: updated.scheduledAt.toISOString(),
+      message: "Interview rescheduled successfully",
+    });
+    return;
+  }
+
+  const [interview] = await db
+    .insert(interviewsTable)
+    .values({
+      candidateId: candidate.id,
+      scheduledAt: parsed.data.scheduledAt,
+      status: "SCHEDULED",
+      attempts: 0,
+    })
+    .returning();
+
+  await db
+    .update(candidatesTable)
+    .set({ status: "SCHEDULED" })
+    .where(eq(candidatesTable.id, candidate.id));
+
+  res.status(201).json({
+    interviewId: interview.id,
+    scheduledAt: interview.scheduledAt.toISOString(),
+    message: "Interview scheduled successfully",
+  });
+});
+
+export default router;

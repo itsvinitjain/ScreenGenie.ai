@@ -9,6 +9,8 @@ import NewJob from "@/pages/NewJob";
 import JobDetail from "@/pages/JobDetail";
 import Candidates from "@/pages/Candidates";
 import Settings from "@/pages/Settings";
+import Schedule from "@/pages/Schedule";
+import InterviewRoom from "@/pages/InterviewRoom";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -28,6 +30,8 @@ function Router() {
       <Route path="/jobs/new" component={NewJob} />
       <Route path="/jobs/:jobId" component={JobDetail} />
       <Route path="/candidates" component={Candidates} />
+      <Route path="/schedule/:candidateId" component={Schedule} />
+      <Route path="/interview/:interviewId" component={InterviewRoom} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

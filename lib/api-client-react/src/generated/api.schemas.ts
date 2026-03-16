@@ -189,6 +189,30 @@ export interface UpdateInterview {
   feedback?: string | null;
 }
 
+export interface TriggerInvitesResponse {
+  invited: number;
+  emailsSent: string[];
+}
+
+export interface ScheduleInfo {
+  candidateId: number;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  jobDescription: string;
+  status: string;
+}
+
+export interface SubmitScheduleBody {
+  scheduledAt: string;
+}
+
+export interface SubmitScheduleResponse {
+  interviewId: number;
+  scheduledAt: string;
+  message: string;
+}
+
 export interface BulkCandidateItem {
   name: string;
   email: string;

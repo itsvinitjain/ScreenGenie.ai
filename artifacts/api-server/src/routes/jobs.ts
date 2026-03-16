@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, jobsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { db, jobsTable, candidatesTable } from "@workspace/db";
 import {
   CreateJobBody,
   GetJobParams,
@@ -10,7 +10,9 @@ import {
   UpdateJobBody,
   UpdateJobResponse,
   DeleteJobParams,
+  TriggerInterviewInvitesParams,
 } from "@workspace/api-zod";
+import { sendInterviewInviteEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -92,6 +94,47 @@ router.delete("/jobs/:id", async (req, res): Promise<void> => {
   }
 
   res.sendStatus(204);
+});
+
+router.post("/jobs/:id/trigger-invites", async (req, res): Promise<void> => {
+  const params = TriggerInterviewInvitesParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const pendingCandidates = await db
+    .select()
+    .from(candidatesTable)
+    .where(
+      and(
+        eq(candidatesTable.jobId, params.data.id),
+        eq(candidatesTable.status, "PENDING")
+      )
+    );
+
+  if (pendingCandidates.length === 0) {
+    res.json({ invited: 0, emailsSent: [] });
+    return;
+  }
+
+  const emailsSent: string[] = [];
+  for (const candidate of pendingCandidates) {
+    sendInterviewInviteEmail(candidate.email, candidate.id);
+    emailsSent.push(candidate.email);
+  }
+
+  await db
+    .update(candidatesTable)
+    .set({ status: "INVITED" })
+    .where(
+      and(
+        eq(candidatesTable.jobId, params.data.id),
+        eq(candidatesTable.status, "PENDING")
+      )
+    );
+
+  res.json({ invited: pendingCandidates.length, emailsSent });
 });
 
 export default router;

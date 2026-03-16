@@ -59,8 +59,12 @@ All routes are under `/api`:
 - `GET/PUT /api/users/:id`
 - `GET/POST /api/jobs` - Job CRUD
 - `GET/PUT/DELETE /api/jobs/:id`
+- `POST /api/jobs/:id/trigger-invites` - Batch update PENDING candidates to INVITED, mock email logs
 - `GET/POST /api/candidates` - Candidate CRUD (supports `?jobId=` filter)
 - `GET/PUT /api/candidates/:id`
+- `POST /api/candidates/bulk` - Bulk import candidates from CSV
+- `GET /api/schedule/:candidateId` - Get candidate + job info for scheduling page
+- `POST /api/schedule/:candidateId` - Submit interview schedule (idempotent — updates existing interview if present)
 - `GET/POST /api/interviews` - Interview CRUD (supports `?candidateId=` filter)
 - `GET/PUT /api/interviews/:id`
 
@@ -68,8 +72,16 @@ All routes are under `/api`:
 
 - **Dashboard** (`/`) - Overview with stat cards, applicant chart, quick actions
 - **Jobs** (`/jobs`) - Job listings table with search, create/edit
+- **New Job** (`/jobs/new`) - Job creation form
+- **Job Detail** (`/jobs/:jobId`) - Job info card, CSV drag-and-drop uploader, candidate table with "Trigger Interview Invites" button
 - **Candidates** (`/candidates`) - Candidate table with status badges, scores, job filter
+- **Schedule** (`/schedule/:candidateId`) - Public scheduling page for candidates with date/time picker
+- **Interview Room** (`/interview/:interviewId`) - Placeholder interview waiting room
 - **Settings** (`/settings`) - User profile/company settings form
+
+## Mock Email Utility
+
+`artifacts/api-server/src/lib/email.ts` — logs to console: `Sending email to [email] with link: /schedule/[candidateId]`
 
 ## Key Commands
 
