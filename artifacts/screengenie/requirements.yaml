@@ -1,0 +1,13 @@
+packages:
+  "framer-motion": "For fluid page transitions, modal animations, and micro-interactions"
+  "recharts": "For enterprise-grade dashboard statistics charts"
+  "date-fns": "For formatting interview and creation dates beautifully"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes without style conflicts"
+
+images: []
+
+notes:
+  - "Using provided @workspace/api-client-react hooks for all data fetching."
+  - "Assuming a mocked HR user (hrId: 1) for creation requests since complete auth isn't specified in the schema."
+  - "Implemented custom beautiful modals/drawers using framer-motion to ensure perfect rendering and animation without relying on potentially misconfigured local UI components."

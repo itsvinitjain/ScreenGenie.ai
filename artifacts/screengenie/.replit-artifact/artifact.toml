@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "ScreenGenie.ai"
+version = "1.0.0"
+id = "artifacts/screengenie"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 23515
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/screengenie run dev"
+
+[services.env]
+PORT = "23515"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/screengenie", "run", "build"]
+publicDir = "artifacts/screengenie/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
