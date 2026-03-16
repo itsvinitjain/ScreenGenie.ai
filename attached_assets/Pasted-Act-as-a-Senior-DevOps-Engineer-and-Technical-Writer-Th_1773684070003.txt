@@ -1,0 +1,23 @@
+Act as a Senior DevOps Engineer and Technical Writer. The application is now built. I need to extract the entire project as a .zip file and get a complete architectural dump of everything you just created.
+
+Please execute the following three steps meticulously:
+
+STEP 1: GENERATE THE ZIP FILE
+Run a terminal/bash command to zip the entire project directory into a file named ScreenGenie_MVP.zip.
+CRITICAL: You must exclude the node_modules/, .next/, and .git/ directories so the zip file isn't bloated.
+Use this command or equivalent: zip -r ScreenGenie_MVP.zip . -x "node_modules/*" -x ".next/*" -x ".git/*"
+
+STEP 2: CREATE A PROJECT MANIFEST (PROJECT_DUMP.md)
+Create a new file in the root directory called PROJECT_DUMP.md. In this file, I want a comprehensive, highly detailed breakdown of the entire application you just built. It must include:
+
+Complete File Tree: A visual ASCII representation of all the folders and files generated (excluding node_modules).
+Database Schema: The final Prisma schema (schema.prisma) printed out, with a brief explanation of how the relations (User -> Job -> Candidate -> Interview) work.
+Route Breakdown: A detailed list of every Next.js App Router page created (e.g., /jobs, /schedule/[candidateId], /interview/[interviewId]) and exactly what each page does.
+Server Actions / API: A list of all the backend Server Actions or API routes you created (e.g., creating a job, uploading CSV, mocking the AI evaluation) and where they are located.
+Key Components: A list of the major React components used (e.g., the CSV Uploader, the Video/Mic proctoring lobby, the Data Tables).
+STEP 3: CHAT OUTPUT
+Once the zip file is successfully created and the PROJECT_DUMP.md file is written, reply back to me in this chat with:
+
+Confirmation that ScreenGenie_MVP.zip is ready to be downloaded.
+A brief 1-paragraph summary of the coolest feature you built in the Interview Room.
+Instructions on how I can run this project locally on my own machine after I unzip it.
