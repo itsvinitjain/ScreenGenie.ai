@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "jKGBTBhRGJL-LJ4SyLYcO"
+uri = "file://ScreenGenie_MVP.zip"
+type = "unspecified"
+title = "ScreenGenie MVP — Complete Project Archive"
+
+[[outputs]]
+id = "VnUNd-iAMo7aq2dNfDLZX"
+uri = "file://PROJECT_DUMP.md"
+type = "text"
+title = "ScreenGenie — Full Architectural Manifest"
