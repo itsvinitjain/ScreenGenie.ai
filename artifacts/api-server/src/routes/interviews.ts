@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, interviewsTable } from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
+import { db, interviewsTable, candidatesTable } from "@workspace/db";
 import {
   GetInterviewsQueryParams,
   CreateInterviewBody,
@@ -10,6 +10,8 @@ import {
   UpdateInterviewParams,
   UpdateInterviewBody,
   UpdateInterviewResponse,
+  StartInterviewParams,
+  EndInterviewParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -87,6 +89,73 @@ router.put("/interviews/:id", async (req, res): Promise<void> => {
   }
 
   res.json(UpdateInterviewResponse.parse(interview));
+});
+
+router.post("/interviews/:id/start", async (req, res): Promise<void> => {
+  const params = StartInterviewParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [updated] = await db
+    .update(interviewsTable)
+    .set({
+      attempts: sql`${interviewsTable.attempts} + 1`,
+      status: "IN_PROGRESS",
+    })
+    .where(
+      sql`${interviewsTable.id} = ${params.data.id} AND ${interviewsTable.attempts} < 2`
+    )
+    .returning();
+
+  if (!updated) {
+    const [interview] = await db
+      .select()
+      .from(interviewsTable)
+      .where(eq(interviewsTable.id, params.data.id));
+
+    if (!interview) {
+      res.status(404).json({ error: "Interview not found" });
+      return;
+    }
+
+    res.status(403).json({ error: "Maximum connection attempts reached. Contact HR." });
+    return;
+  }
+
+  res.json(GetInterviewResponse.parse(updated));
+});
+
+router.post("/interviews/:id/end", async (req, res): Promise<void> => {
+  const params = EndInterviewParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [interview] = await db
+    .select()
+    .from(interviewsTable)
+    .where(eq(interviewsTable.id, params.data.id));
+
+  if (!interview) {
+    res.status(404).json({ error: "Interview not found" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(interviewsTable)
+    .set({ status: "COMPLETED" })
+    .where(eq(interviewsTable.id, params.data.id))
+    .returning();
+
+  await db
+    .update(candidatesTable)
+    .set({ status: "INTERVIEWED" })
+    .where(eq(candidatesTable.id, interview.candidateId));
+
+  res.json(GetInterviewResponse.parse(updated));
 });
 
 export default router;

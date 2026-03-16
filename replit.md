@@ -67,6 +67,8 @@ All routes are under `/api`:
 - `POST /api/schedule/:candidateId` - Submit interview schedule (idempotent — updates existing interview if present)
 - `GET/POST /api/interviews` - Interview CRUD (supports `?candidateId=` filter)
 - `GET/PUT /api/interviews/:id`
+- `POST /api/interviews/:id/start` - Increment attempts + set IN_PROGRESS (403 if attempts >= 2)
+- `POST /api/interviews/:id/end` - Mark COMPLETED + set candidate to INTERVIEWED
 
 ## Frontend Pages
 
@@ -76,7 +78,7 @@ All routes are under `/api`:
 - **Job Detail** (`/jobs/:jobId`) - Job info card, CSV drag-and-drop uploader, candidate table with "Trigger Interview Invites" button
 - **Candidates** (`/candidates`) - Candidate table with status badges, scores, job filter
 - **Schedule** (`/schedule/:candidateId`) - Public scheduling page for candidates with date/time picker
-- **Interview Room** (`/interview/:interviewId`) - Placeholder interview waiting room
+- **Interview Room** (`/interview/:interviewId`) - Full interview interface with Tech Check Lobby (camera/mic/screen share), locked state (attempts >= 2), active interview (audio visualizer + camera PiP + tab proctoring), and thank you page
 - **Settings** (`/settings`) - User profile/company settings form
 
 ## Mock Email Utility

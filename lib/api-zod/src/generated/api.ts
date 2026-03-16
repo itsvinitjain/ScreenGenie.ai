@@ -404,3 +404,39 @@ export const UpdateInterviewResponse = zod.object({
   feedback: zod.string().nullish(),
   createdAt: zod.date().optional(),
 });
+
+/**
+ * @summary Increment attempts and start interview
+ */
+export const StartInterviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const StartInterviewResponse = zod.object({
+  id: zod.number(),
+  candidateId: zod.number(),
+  scheduledAt: zod.date(),
+  status: zod.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
+  attempts: zod.number(),
+  transcript: zod.string().nullish(),
+  feedback: zod.string().nullish(),
+  createdAt: zod.date().optional(),
+});
+
+/**
+ * @summary End interview and update candidate status
+ */
+export const EndInterviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const EndInterviewResponse = zod.object({
+  id: zod.number(),
+  candidateId: zod.number(),
+  scheduledAt: zod.date(),
+  status: zod.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
+  attempts: zod.number(),
+  transcript: zod.string().nullish(),
+  feedback: zod.string().nullish(),
+  createdAt: zod.date().optional(),
+});

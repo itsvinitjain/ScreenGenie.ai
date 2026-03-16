@@ -236,3 +236,7 @@ export type GetCandidatesParams = {
 export type GetInterviewsParams = {
   candidateId?: number;
 };
+
+export type StartInterview403 = {
+  error?: string;
+};

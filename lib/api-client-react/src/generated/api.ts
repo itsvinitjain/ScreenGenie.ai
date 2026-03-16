@@ -31,6 +31,7 @@ import type {
   Interview,
   Job,
   ScheduleInfo,
+  StartInterview403,
   SubmitScheduleBody,
   SubmitScheduleResponse,
   TriggerInvitesResponse,
@@ -1970,4 +1971,172 @@ export const useUpdateInterview = <
   TContext
 > => {
   return useMutation(getUpdateInterviewMutationOptions(options));
+};
+
+/**
+ * @summary Increment attempts and start interview
+ */
+export const getStartInterviewUrl = (id: number) => {
+  return `/api/interviews/${id}/start`;
+};
+
+export const startInterview = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Interview> => {
+  return customFetch<Interview>(getStartInterviewUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getStartInterviewMutationOptions = <
+  TError = ErrorType<StartInterview403>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startInterview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof startInterview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["startInterview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof startInterview>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return startInterview(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StartInterviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof startInterview>>
+>;
+
+export type StartInterviewMutationError = ErrorType<StartInterview403>;
+
+/**
+ * @summary Increment attempts and start interview
+ */
+export const useStartInterview = <
+  TError = ErrorType<StartInterview403>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startInterview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof startInterview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getStartInterviewMutationOptions(options));
+};
+
+/**
+ * @summary End interview and update candidate status
+ */
+export const getEndInterviewUrl = (id: number) => {
+  return `/api/interviews/${id}/end`;
+};
+
+export const endInterview = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Interview> => {
+  return customFetch<Interview>(getEndInterviewUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getEndInterviewMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof endInterview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof endInterview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["endInterview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof endInterview>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return endInterview(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type EndInterviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof endInterview>>
+>;
+
+export type EndInterviewMutationError = ErrorType<unknown>;
+
+/**
+ * @summary End interview and update candidate status
+ */
+export const useEndInterview = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof endInterview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof endInterview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getEndInterviewMutationOptions(options));
 };

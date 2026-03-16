@@ -27,6 +27,7 @@ export * from "./interviewStatus";
 export * from "./job";
 export * from "./jobStatus";
 export * from "./scheduleInfo";
+export * from "./startInterview403";
 export * from "./submitScheduleBody";
 export * from "./submitScheduleResponse";
 export * from "./triggerInvitesResponse";

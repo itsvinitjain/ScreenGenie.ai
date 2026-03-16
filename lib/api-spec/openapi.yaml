@@ -434,6 +434,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Interview"
+  /interviews/{id}/start:
+    post:
+      operationId: startInterview
+      tags: [interviews]
+      summary: Increment attempts and start interview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Interview started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+        "403":
+          description: Max attempts reached
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /interviews/{id}/end:
+    post:
+      operationId: endInterview
+      tags: [interviews]
+      summary: End interview and update candidate status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Interview ended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
 components:
   schemas:
     HealthStatus:
