@@ -213,6 +213,26 @@ export interface SubmitScheduleResponse {
   message: string;
 }
 
+export interface EvaluationResponse {
+  evaluated: number;
+  hired: number;
+  rejected: number;
+}
+
+export interface EvaluatedCandidate {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  status: string;
+  score?: number | null;
+  interviewId?: number | null;
+  feedback?: string | null;
+  transcript?: string | null;
+  scheduledAt?: string | null;
+  createdAt: string;
+}
+
 export interface BulkCandidateItem {
   name: string;
   email: string;

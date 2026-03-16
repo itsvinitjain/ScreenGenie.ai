@@ -60,6 +60,8 @@ All routes are under `/api`:
 - `GET/POST /api/jobs` - Job CRUD
 - `GET/PUT/DELETE /api/jobs/:id`
 - `POST /api/jobs/:id/trigger-invites` - Batch update PENDING candidates to INVITED, mock email logs
+- `POST /api/jobs/:id/evaluate` - Run AI evaluation on INTERVIEWED candidates (random scores, mock feedback/transcript)
+- `GET /api/jobs/:id/results` - Get candidates with interview data (LATERAL join for latest interview)
 - `GET/POST /api/candidates` - Candidate CRUD (supports `?jobId=` filter)
 - `GET/PUT /api/candidates/:id`
 - `POST /api/candidates/bulk` - Bulk import candidates from CSV
@@ -75,7 +77,7 @@ All routes are under `/api`:
 - **Dashboard** (`/`) - Overview with stat cards, applicant chart, quick actions
 - **Jobs** (`/jobs`) - Job listings table with search, create/edit
 - **New Job** (`/jobs/new`) - Job creation form
-- **Job Detail** (`/jobs/:jobId`) - Job info card, CSV drag-and-drop uploader, candidate table with "Trigger Interview Invites" button
+- **Job Detail** (`/jobs/:jobId`) - Job info card with Pipeline tab (CSV uploader, candidate table, "Trigger Interview Invites") and Results tab (AI evaluation, ranked leaderboard, "View Report" modal with score/feedback/transcript)
 - **Candidates** (`/candidates`) - Candidate table with status badges, scores, job filter
 - **Schedule** (`/schedule/:candidateId`) - Public scheduling page for candidates with date/time picker
 - **Interview Room** (`/interview/:interviewId`) - Full interview interface with Tech Check Lobby (camera/mic/screen share), locked state (attempts >= 2), active interview (audio visualizer + camera PiP + tab proctoring), and thank you page

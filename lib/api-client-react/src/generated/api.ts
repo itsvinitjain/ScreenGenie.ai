@@ -25,6 +25,8 @@ import type {
   CreateJob,
   CreateUser,
   DashboardStats,
+  EvaluatedCandidate,
+  EvaluationResponse,
   GetCandidatesParams,
   GetInterviewsParams,
   HealthStatus,
@@ -997,6 +999,177 @@ export const useTriggerInterviewInvites = <
 > => {
   return useMutation(getTriggerInterviewInvitesMutationOptions(options));
 };
+
+/**
+ * @summary Run AI evaluation on INTERVIEWED candidates
+ */
+export const getRunAiEvaluationUrl = (id: number) => {
+  return `/api/jobs/${id}/evaluate`;
+};
+
+export const runAiEvaluation = async (
+  id: number,
+  options?: RequestInit,
+): Promise<EvaluationResponse> => {
+  return customFetch<EvaluationResponse>(getRunAiEvaluationUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getRunAiEvaluationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runAiEvaluation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof runAiEvaluation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["runAiEvaluation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof runAiEvaluation>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return runAiEvaluation(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RunAiEvaluationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof runAiEvaluation>>
+>;
+
+export type RunAiEvaluationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Run AI evaluation on INTERVIEWED candidates
+ */
+export const useRunAiEvaluation = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runAiEvaluation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof runAiEvaluation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getRunAiEvaluationMutationOptions(options));
+};
+
+/**
+ * @summary Get evaluated candidates with interview data
+ */
+export const getGetJobResultsUrl = (id: number) => {
+  return `/api/jobs/${id}/results`;
+};
+
+export const getJobResults = async (
+  id: number,
+  options?: RequestInit,
+): Promise<EvaluatedCandidate[]> => {
+  return customFetch<EvaluatedCandidate[]>(getGetJobResultsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetJobResultsQueryKey = (id: number) => {
+  return [`/api/jobs/${id}/results`] as const;
+};
+
+export const getGetJobResultsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getJobResults>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJobResults>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetJobResultsQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobResults>>> = ({
+    signal,
+  }) => getJobResults(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getJobResults>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetJobResultsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getJobResults>>
+>;
+export type GetJobResultsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get evaluated candidates with interview data
+ */
+
+export function useGetJobResults<
+  TData = Awaited<ReturnType<typeof getJobResults>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJobResults>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetJobResultsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Get candidate and job info for scheduling

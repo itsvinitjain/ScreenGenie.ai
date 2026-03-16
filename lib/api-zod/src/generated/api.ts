@@ -170,6 +170,41 @@ export const TriggerInterviewInvitesResponse = zod.object({
 });
 
 /**
+ * @summary Run AI evaluation on INTERVIEWED candidates
+ */
+export const RunAiEvaluationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const RunAiEvaluationResponse = zod.object({
+  evaluated: zod.number(),
+  hired: zod.number(),
+  rejected: zod.number(),
+});
+
+/**
+ * @summary Get evaluated candidates with interview data
+ */
+export const GetJobResultsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetJobResultsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string().nullish(),
+  status: zod.string(),
+  score: zod.number().nullish(),
+  interviewId: zod.number().nullish(),
+  feedback: zod.string().nullish(),
+  transcript: zod.string().nullish(),
+  scheduledAt: zod.date().nullish(),
+  createdAt: zod.date(),
+});
+export const GetJobResultsResponse = zod.array(GetJobResultsResponseItem);
+
+/**
  * @summary Get candidate and job info for scheduling
  */
 export const GetScheduleInfoParams = zod.object({

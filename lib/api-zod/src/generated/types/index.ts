@@ -19,6 +19,8 @@ export * from "./createJob";
 export * from "./createJobStatus";
 export * from "./createUser";
 export * from "./dashboardStats";
+export * from "./evaluatedCandidate";
+export * from "./evaluationResponse";
 export * from "./getCandidatesParams";
 export * from "./getInterviewsParams";
 export * from "./healthStatus";

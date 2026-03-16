@@ -219,6 +219,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TriggerInvitesResponse"
+  /jobs/{id}/evaluate:
+    post:
+      operationId: runAiEvaluation
+      tags: [jobs]
+      summary: Run AI evaluation on INTERVIEWED candidates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evaluation results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationResponse"
+  /jobs/{id}/results:
+    get:
+      operationId: getJobResults
+      tags: [jobs]
+      summary: Get evaluated candidates with interview data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evaluated candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvaluatedCandidate"
   /schedule/{candidateId}:
     get:
       operationId: getScheduleInfo
@@ -777,6 +815,58 @@ components:
         - interviewId
         - scheduledAt
         - message
+    EvaluationResponse:
+      type: object
+      properties:
+        evaluated:
+          type: integer
+        hired:
+          type: integer
+        rejected:
+          type: integer
+      required:
+        - evaluated
+        - hired
+        - rejected
+    EvaluatedCandidate:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        status:
+          type: string
+        score:
+          type: integer
+          nullable: true
+        interviewId:
+          type: integer
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        transcript:
+          type: string
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - status
+        - createdAt
     BulkCandidateItem:
       type: object
       properties:

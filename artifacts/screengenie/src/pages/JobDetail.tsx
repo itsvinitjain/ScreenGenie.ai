@@ -22,10 +22,14 @@ import {
   Phone,
   Star,
   Send,
+  Trophy,
 } from "lucide-react";
 import { format } from "date-fns";
 import Papa from "papaparse";
 import { cn } from "@/lib/utils";
+import JobResults from "./JobResults";
+
+type TabType = "pipeline" | "results";
 
 interface CsvRow {
   name: string;
@@ -76,6 +80,7 @@ export default function JobDetail() {
     );
   };
 
+  const [activeTab, setActiveTab] = useState<TabType>("pipeline");
   const pendingCount = candidates?.filter((c) => c.status === "PENDING").length || 0;
 
   const parseCsvFile = useCallback((file: File) => {
@@ -296,6 +301,37 @@ export default function JobDetail() {
           </div>
         </div>
 
+        <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-xl w-fit">
+          <button
+            onClick={() => setActiveTab("pipeline")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              activeTab === "pipeline"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Users className="w-4 h-4" />
+            Pipeline
+          </button>
+          <button
+            onClick={() => setActiveTab("results")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              activeTab === "results"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Trophy className="w-4 h-4" />
+            Results
+          </button>
+        </div>
+
+        {activeTab === "results" ? (
+          <JobResults jobId={jobId} />
+        ) : (
+        <>
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 mb-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
@@ -619,6 +655,8 @@ export default function JobDetail() {
             </table>
           </div>
         </div>
+        </>
+        )}
       </div>
     </AppLayout>
   );
