@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import Dashboard from "@/pages/Dashboard";
 import Jobs from "@/pages/Jobs";
+import NewJob from "@/pages/NewJob";
+import JobDetail from "@/pages/JobDetail";
 import Candidates from "@/pages/Candidates";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
@@ -23,6 +25,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/jobs" component={Jobs} />
+      <Route path="/jobs/new" component={NewJob} />
+      <Route path="/jobs/:jobId" component={JobDetail} />
       <Route path="/candidates" component={Candidates} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />

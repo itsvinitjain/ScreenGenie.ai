@@ -189,6 +189,22 @@ export interface UpdateInterview {
   feedback?: string | null;
 }
 
+export interface BulkCandidateItem {
+  name: string;
+  email: string;
+  phone?: string;
+}
+
+export interface BulkCreateCandidates {
+  jobId: number;
+  candidates: BulkCandidateItem[];
+}
+
+export interface BulkCreateCandidatesResponse {
+  imported: number;
+  failed: number;
+}
+
 export type GetCandidatesParams = {
   jobId?: number;
 };

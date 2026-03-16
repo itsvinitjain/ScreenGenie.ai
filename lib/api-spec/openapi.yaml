@@ -201,6 +201,24 @@ paths:
       responses:
         "204":
           description: Deleted
+  /candidates/bulk:
+    post:
+      operationId: bulkCreateCandidates
+      tags: [candidates]
+      summary: Bulk import candidates from CSV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkCreateCandidates"
+      responses:
+        "201":
+          description: Bulk created candidates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreateCandidatesResponse"
   /candidates:
     get:
       operationId: getCandidates
@@ -599,3 +617,37 @@ components:
         feedback:
           type: string
           nullable: true
+    BulkCandidateItem:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+      required:
+        - name
+        - email
+    BulkCreateCandidates:
+      type: object
+      properties:
+        jobId:
+          type: integer
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkCandidateItem"
+      required:
+        - jobId
+        - candidates
+    BulkCreateCandidatesResponse:
+      type: object
+      properties:
+        imported:
+          type: integer
+        failed:
+          type: integer
+      required:
+        - imported
+        - failed

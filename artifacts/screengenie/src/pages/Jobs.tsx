@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useGetJobs, useCreateJob, useUpdateJob, useDeleteJob, Job, CreateJobStatus } from "@workspace/api-client-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { Plus, Search, MoreHorizontal, FileEdit, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Search, MoreHorizontal, FileEdit, Trash2, ExternalLink, Eye } from "lucide-react";
 import { format } from "date-fns";
 
 export default function Jobs() {
+  const [, navigate] = useLocation();
   const { data: jobs, isLoading } = useGetJobs();
   const createJob = useCreateJob();
   const updateJob = useUpdateJob();
@@ -152,10 +154,7 @@ export default function Jobs() {
           <h1 className="text-3xl font-display font-bold text-slate-900">Jobs</h1>
           <p className="text-slate-500 mt-1">Manage your active job postings and requirements.</p>
         </div>
-        <Button onClick={() => {
-          setFormData({ title: "", description: "", skills: "", status: CreateJobStatus.OPEN });
-          setIsCreateModalOpen(true);
-        }} className="shrink-0 gap-2 rounded-full px-6">
+        <Button onClick={() => navigate("/jobs/new")} className="shrink-0 gap-2 rounded-full px-6">
           <Plus className="w-4 h-4" /> New Job
         </Button>
       </div>
@@ -210,8 +209,10 @@ export default function Jobs() {
                 filteredJobs.map((job) => (
                   <tr key={job.id} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{job.title}</div>
-                      <div className="text-xs text-slate-500 truncate max-w-[300px] mt-0.5">{job.description}</div>
+                      <button onClick={() => navigate(`/jobs/${job.id}`)} className="text-left group/title">
+                        <div className="font-medium text-slate-900 group-hover/title:text-indigo-600 transition-colors">{job.title}</div>
+                        <div className="text-xs text-slate-500 truncate max-w-[300px] mt-0.5">{job.description}</div>
+                      </button>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={job.status === 'OPEN' ? 'success' : job.status === 'DRAFT' ? 'secondary' : 'default'}>
@@ -237,6 +238,9 @@ export default function Jobs() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => navigate(`/jobs/${job.id}`)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="View Job">
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button onClick={() => openEditModal(job)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit Job">
                           <FileEdit className="w-4 h-4" />
                         </button>

@@ -158,6 +158,20 @@ export const DeleteJobParams = zod.object({
 });
 
 /**
+ * @summary Bulk import candidates from CSV
+ */
+export const BulkCreateCandidatesBody = zod.object({
+  jobId: zod.number(),
+  candidates: zod.array(
+    zod.object({
+      name: zod.string(),
+      email: zod.string(),
+      phone: zod.string().optional(),
+    }),
+  ),
+});
+
+/**
  * @summary List all candidates
  */
 export const GetCandidatesQueryParams = zod.object({

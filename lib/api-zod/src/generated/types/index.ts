@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./bulkCandidateItem";
+export * from "./bulkCreateCandidates";
+export * from "./bulkCreateCandidatesResponse";
 export * from "./candidate";
 export * from "./candidateStatus";
 export * from "./createCandidate";

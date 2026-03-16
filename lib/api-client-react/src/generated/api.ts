@@ -17,6 +17,8 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  BulkCreateCandidates,
+  BulkCreateCandidatesResponse,
   Candidate,
   CreateCandidate,
   CreateInterview,
@@ -902,6 +904,95 @@ export const useDeleteJob = <
   TContext
 > => {
   return useMutation(getDeleteJobMutationOptions(options));
+};
+
+/**
+ * @summary Bulk import candidates from CSV
+ */
+export const getBulkCreateCandidatesUrl = () => {
+  return `/api/candidates/bulk`;
+};
+
+export const bulkCreateCandidates = async (
+  bulkCreateCandidates: BulkCreateCandidates,
+  options?: RequestInit,
+): Promise<BulkCreateCandidatesResponse> => {
+  return customFetch<BulkCreateCandidatesResponse>(
+    getBulkCreateCandidatesUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(bulkCreateCandidates),
+    },
+  );
+};
+
+export const getBulkCreateCandidatesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreateCandidates>>,
+    TError,
+    { data: BodyType<BulkCreateCandidates> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof bulkCreateCandidates>>,
+  TError,
+  { data: BodyType<BulkCreateCandidates> },
+  TContext
+> => {
+  const mutationKey = ["bulkCreateCandidates"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bulkCreateCandidates>>,
+    { data: BodyType<BulkCreateCandidates> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return bulkCreateCandidates(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BulkCreateCandidatesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof bulkCreateCandidates>>
+>;
+export type BulkCreateCandidatesMutationBody = BodyType<BulkCreateCandidates>;
+export type BulkCreateCandidatesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Bulk import candidates from CSV
+ */
+export const useBulkCreateCandidates = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreateCandidates>>,
+    TError,
+    { data: BodyType<BulkCreateCandidates> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof bulkCreateCandidates>>,
+  TError,
+  { data: BodyType<BulkCreateCandidates> },
+  TContext
+> => {
+  return useMutation(getBulkCreateCandidatesMutationOptions(options));
 };
 
 /**

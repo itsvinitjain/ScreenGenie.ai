@@ -10,6 +10,7 @@ import {
   UpdateCandidateParams,
   UpdateCandidateBody,
   UpdateCandidateResponse,
+  BulkCreateCandidatesBody,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -28,6 +29,35 @@ router.get("/candidates", async (req, res): Promise<void> => {
 
   const candidates = await q.orderBy(candidatesTable.createdAt);
   res.json(GetCandidatesResponse.parse(candidates));
+});
+
+router.post("/candidates/bulk", async (req, res): Promise<void> => {
+  const parsed = BulkCreateCandidatesBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { jobId, candidates } = parsed.data;
+  let imported = 0;
+  let failed = 0;
+
+  for (const candidate of candidates) {
+    try {
+      await db.insert(candidatesTable).values({
+        jobId,
+        name: candidate.name,
+        email: candidate.email,
+        phone: candidate.phone ?? null,
+        status: "PENDING",
+      });
+      imported++;
+    } catch {
+      failed++;
+    }
+  }
+
+  res.status(201).json({ imported, failed });
 });
 
 router.post("/candidates", async (req, res): Promise<void> => {
