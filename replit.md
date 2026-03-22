@@ -74,6 +74,15 @@ All routes are under `/api`:
 - `GET/PUT /api/interviews/:id`
 - `POST /api/interviews/:id/start` - Increment attempts + set IN_PROGRESS (403 if attempts >= 2)
 - `POST /api/interviews/:id/end` - Mark COMPLETED + set candidate to INTERVIEWED
+- `POST /api/sessions` - Create AI interview session (body: interviewId, candidateName)
+- `GET /api/sessions/:id` - Get session with interview, messages, timing info
+- `POST /api/sessions/:id/next-question` - Stream next AI interviewer question (SSE)
+- `POST /api/sessions/:id/message` - Submit candidate message + stream AI response (SSE)
+- `POST /api/sessions/:id/speak` - Text-to-speech for AI interviewer voice
+- `POST /api/sessions/:id/transcribe` - Transcribe candidate audio (Whisper)
+- `POST /api/sessions/:id/proctor-event` - Record proctoring events (tab switch, focus lost, etc.)
+- `POST /api/sessions/:id/code-submission` - Submit and analyze code during coding phase
+- `POST /api/sessions/:id/end` - End session, generate 9-dimension AI evaluation, update candidate/interview
 
 ## Frontend Pages
 

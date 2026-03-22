@@ -1,0 +1,104 @@
+Create artifacts/api-server/src/routes/sessions.ts.
+This is an Express Router. All routes must be under the /sessions prefix.
+ 
+Imports needed at the top
+import { Router, type IRouter } from 'express';
+import { eq } from 'drizzle-orm';
+import { db, interviewsTable, sessionsTable, sessionMessagesTable, candidatesTable } from '@workspace/db';
+import { streamInterviewResponse, generateEvaluation, getInitialStrictness,
+getVoiceForGender, getStrictnessLimits, analyzeCodeSubmission } from '../lib/interviewAI';
+import { textToSpeech, ensureCompatibleFormat } from '../lib/audio';
+import { openai } from '../lib/openai';
+ 
+Helper functions (copy exactly from ai-bot-demo sessions/index.ts)
+getElapsedSeconds(startedAt: Date|null): number
+getElapsedMinutes(startedAt: Date|null): number
+isTimeExceeded(startedAt: Date|null, durationMinutes: number): boolean
+clampMetadata(metadata, experienceLevel, currentQuestionsAsked) — clamps strictness within STRICTNESS_LIMITS
+ 
+Route 1: POST /sessions
+Body: { interviewId: number, candidateName: string }
+Logic: Look up interview. Call getInitialStrictness(interview.experienceLevel).
+Insert sessionsTable row with status='active', currentStrictness, questionsAsked=0, startedAt=new Date().
+Return 201 with the new session row.
+ 
+Route 2: GET /sessions/:id
+Logic: Load session, interview, and ALL messages from sessionMessagesTable ordered by createdAt.
+Calculate elapsedSec, remainingSeconds = max(0, durationMinutes*60 - elapsedSec).
+Return: { session, interview, messages, elapsedMinutes, remainingSeconds, isTimeUp }
+ 
+Route 3: POST /sessions/:id/next-question
+Body: { candidateTimezone?: string }
+Logic: Load session + interview. If isTimeExceeded → SSE done event with timeUp:true.
+Load existing messages, build conversationHistory array as {role,content}[].
+Stream streamInterviewResponse(ctx) as SSE (Content-Type: text/event-stream).
+- Each content event: write  data: {type:'content', content: event.data}\n\n
+- On metadata event: save to metadata variable (do not write yet)
+After stream ends: call clampMetadata(metadata, ...). Get voice from getVoiceForGender.
+Run in parallel (Promise.all):
+1. Insert interviewer message into sessionMessagesTable (with questionNumber, timeAllotted)
+2. Update sessionsTable: currentStrictness, questionsAsked = clamped.questionNumber
+3. Call textToSpeech(aiResponse, voice, 'mp3') → get Buffer
+Write final SSE: data: {type:'done', response, newStrictness, timeAllotted, questionNumber, audioBase64}\n\n
+Then res.end().
+ 
+Route 4: POST /sessions/:id/message
+Body: { content: string, candidateTimezone?: string }
+Logic: Same as next-question BUT first inserts the candidate message BEFORE loading history.
+If isTimeExceeded → SSE done with timeUp:true (don't process).
+Otherwise: full streaming flow identical to next-question.
+ 
+Route 5: POST /sessions/:id/speak
+Body: { text: string, voice?: string }
+Logic: Load session+interview. voice = body.voice OR getVoiceForGender(interview.voiceGender).
+Call textToSpeech(text, voice, 'mp3'). Return { audioBase64: buffer.toString('base64') }.
+ 
+Route 6: POST /sessions/:id/transcribe
+Body: { audioBase64: string }
+Logic: Buffer.from(audioBase64, 'base64').
+Call ensureCompatibleFormat(audioBuffer) → { buffer, format }.
+Create File object: new File([buffer], `audio.${format}`, {type: format==='wav'?'audio/wav':'audio/webm'}).
+Call openai.audio.transcriptions.create({ model:'gpt-4o-mini-transcribe', file, response_format:'json' }).
+Return { text: transcription.text }.
+ 
+Route 7: POST /sessions/:id/proctor-event
+Body: { type: string, timestamp: string, details?: string }
+Logic: Load session. Mutate proctoringFlags array (copy from existing array or []).
+tab_switch → increment tabSwitchCount, push 'TAB_SWITCH:{timestamp}'
+focus_lost → increment focusLostCount, push 'FOCUS_LOST:{timestamp}'
+tab_returned|focus_returned → push '{TYPE}:{timestamp}'
+paste_detected → push 'PASTE_DETECTED|{timestamp}|{details}'
+looking_away|face_not_visible → push '{TYPE}|{timestamp}|{details}'
+Update sessionsTable. Return { ok: true }.
+ 
+Route 8: POST /sessions/:id/code-submission
+Body: { code: string, language: string, output?: string }
+Logic: Load session+interview. Verify codingEnabled.
+Call analyzeCodeSubmission(code, language, output||'', interview.jobDescription).
+Build structured content string (see ai-bot-demo sessions route code-submission handler for exact format).
+Insert into sessionMessagesTable with role='code'.
+Return { ok: true }.
+ 
+Route 9: POST /sessions/:id/end
+Logic: Load session. If status==='completed', parse session.feedback as JSON,
+return stored._fullEvaluation if it exists.
+Otherwise: load interview+messages. Build conversationHistory. Call generateEvaluation(ctx).
+Build responsePayload with scores{},feedback,strengths,improvements,aiSuspicionReport,finalVerdict.
+Build feedbackJson = JSON.stringify({ _fullEvaluation: responsePayload, text: evaluation.feedback }).
+Update sessionsTable: status='completed', endedAt=new Date(), overallScore=evaluation.overall, feedback=feedbackJson.
+Update ScreenGenie's candidatesTable: status='INTERVIEWED', score=evaluation.overall
+WHERE candidatesTable.id = interview.candidateId  (use ScreenGenie's interviewsTable.candidateId FK)
+Also update interviewsTable: status='COMPLETED', feedback=feedbackJson
+WHERE interviewsTable.id = session.interviewId
+Return { session: updatedSession, ...responsePayload }.
+ 
+Final step: register in artifacts/api-server/src/routes/index.ts
+Add: import sessionsRouter from './sessions';
+Add: router.use(sessionsRouter);
+ 
+Match existing code style in the file. Use try/catch for async routes.
+Do NOT add zod validation wrappers — use direct req.body access to keep it simple.
+✅  Done when:
+•	POST /api/sessions returns { id, interviewId, candidateName, status:'active', ... }
+•	POST /api/sessions/:id/next-question streams SSE with text/event-stream content-type
+•	POST /api/sessions/:id/end returns { scores: { technical, overall, ... }, finalVerdict }
