@@ -1,6 +1,7 @@
-import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { sql } from "drizzle-orm";
 import { candidatesTable } from "./candidates";
 
 export const interviewsTable = pgTable("interviews", {
@@ -11,6 +12,11 @@ export const interviewsTable = pgTable("interviews", {
   attempts: integer("attempts").notNull().default(0),
   transcript: text("transcript"),
   feedback: text("feedback"),
+  voiceGender: text("voice_gender").notNull().default("female"),
+  experienceLevel: text("experience_level").notNull().default("medium"),
+  questions: text("questions").array().notNull().default(sql`'{}'::text[]`),
+  durationMinutes: integer("duration_minutes").notNull().default(30),
+  codingEnabled: boolean("coding_enabled").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
