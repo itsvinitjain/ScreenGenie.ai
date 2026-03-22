@@ -1,0 +1,62 @@
+I need to extend the database schema in my ScreenGenie.ai monorepo.
+The monorepo root is the working directory. The DB package lives at lib/db/.
+ 
+Step 1 — extend lib/db/src/schema/interviews.ts
+The current interviewsTable has: id, candidateId, scheduledAt, status, attempts, transcript, feedback, createdAt.
+ADD these 5 columns (do NOT remove any existing columns):
+voiceGender     text       notNull  default 'female'
+experienceLevel text       notNull  default 'medium'
+questions       text[]     notNull  default sql`'{}'::text[]`
+durationMinutes integer    notNull  default 30
+codingEnabled   boolean    notNull  default false
+ 
+Step 2 — create lib/db/src/schema/sessions.ts
+Copy this EXACT schema (use Drizzle ORM v2 + pgTable):
+id              serial PK
+interviewId     integer  notNull  FK→interviewsTable(id) onDelete cascade
+candidateName   text     notNull
+status          text     notNull  default 'active'
+currentStrictness integer notNull default 5
+questionsAsked  integer  notNull  default 0
+startedAt       timestamp(withTimezone:true)  nullable
+endedAt         timestamp(withTimezone:true)  nullable
+overallScore    integer  nullable
+feedback        text     nullable
+tabSwitchCount  integer  notNull  default 0
+focusLostCount  integer  notNull  default 0
+proctoringFlags jsonb    type string[]  default []
+idVerified      boolean  notNull  default false
+idVerificationData jsonb  type Record<string,unknown>  nullable
+createdAt       timestamp(withTimezone:true) notNull defaultNow
+Export: insertSessionSchema (omit id,createdAt,startedAt,endedAt,overallScore,feedback), type InsertSession, type Session
+ 
+Step 3 — create lib/db/src/schema/sessionMessages.ts
+Copy this EXACT schema:
+id             serial PK
+sessionId      integer  notNull  FK→sessionsTable(id) onDelete cascade
+role           text     notNull    (values: 'interviewer' | 'candidate' | 'code')
+content        text     notNull
+questionNumber integer  nullable
+timeAllotted   integer  nullable
+createdAt      timestamp(withTimezone:true) notNull defaultNow
+Export: insertSessionMessageSchema (omit id,createdAt), type InsertSessionMessage, type SessionMessage
+ 
+Step 4 — update lib/db/src/schema/index.ts
+Add these two exports:
+export * from './sessions';
+export * from './sessionMessages';
+ 
+Step 5 — update lib/db/src/index.ts
+The existing export * from './schema' already covers everything — just verify sessionsTable
+and sessionMessagesTable are now exported from this file.
+ 
+Step 6 — run migration
+Run: npx drizzle-kit push  (or whatever migration command is in lib/db/drizzle.config.ts)
+Verify the 3 schema changes applied without errors.
+ 
+Use exact Drizzle ORM syntax matching the existing interviews.ts in this project.
+Use zod/v4 for insert schemas. Do NOT use zod v3.
+✅  Done when:
+•	npx drizzle-kit push runs with 0 errors
+•	sessions and session_messages tables are visible in the DB
+•	interviewsTable has voiceGender, experienceLevel, questions, durationMinutes, codingEnabled columns
