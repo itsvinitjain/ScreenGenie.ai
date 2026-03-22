@@ -243,6 +243,7 @@ export default function InterviewRoom() {
 
   const handleStartInterview = async () => {
     setStartError(null);
+    unlockAudio();
     try {
       startMutation.mutate(
         { id: interviewId },
@@ -262,10 +263,9 @@ export default function InterviewRoom() {
                 { interviewId, candidateName },
                 {
                   onSuccess: (data: any) => {
-                    setSessionId(data.session.id);
+                    setSessionId(data.id);
                     setState("prestart");
 
-                    unlockAudio();
                     setPreStartCountdown(5);
                     preStartRef.current = setInterval(() => {
                       setPreStartCountdown((prev) => {

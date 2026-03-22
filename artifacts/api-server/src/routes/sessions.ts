@@ -192,6 +192,7 @@ router.post("/sessions/:id/next-question", async (req, res): Promise<void> => {
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
       res.write(`data: ${JSON.stringify({ type: "done", response: "Thank you for your time. The interview duration has ended. We will now generate your evaluation.", timeUp: true })}\n\n`);
       res.end();
       return;
@@ -216,6 +217,7 @@ router.post("/sessions/:id/next-question", async (req, res): Promise<void> => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
 
     let aiResponse = "";
     let metadata: AIResponseMetadata | null = null;
@@ -334,6 +336,7 @@ router.post("/sessions/:id/message", async (req, res): Promise<void> => {
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
       res.write(`data: ${JSON.stringify({ type: "done", response: "Thank you for your time. The interview duration has ended. We will now generate your evaluation.", timeUp: true })}\n\n`);
       res.end();
       return;
@@ -364,6 +367,7 @@ router.post("/sessions/:id/message", async (req, res): Promise<void> => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
 
     let aiResponse = "";
     let metadata: AIResponseMetadata | null = null;

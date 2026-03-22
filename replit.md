@@ -100,6 +100,10 @@ All routes are under `/api`:
 
 `artifacts/api-server/src/lib/email.ts` — logs to console: `Sending email to [email] with link: /schedule/[candidateId]`
 
+## Dev Proxy
+
+The Vite dev server proxies `/api` requests to `http://localhost:8080` (Express API server). This is configured in `artifacts/screengenie/vite.config.ts` under `server.proxy`. Both the generated API client (`@workspace/api-client-react`) and custom fetch calls in hooks use relative `/api/...` paths that rely on this proxy.
+
 ## Key Commands
 
 - `pnpm run typecheck` - Full typecheck

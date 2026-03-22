@@ -1,0 +1,49 @@
+
+End-to-End Test + Fix Checklist
+Run the full candidate journey and fix any issues found.
+
+I have completed the integration of AI interview functionality into ScreenGenie.
+Please do a final review and fix these known risk areas:
+ 
+Risk 1 — TypeScript compilation errors
+Check for import errors in:
+- artifacts/api-server/src/lib/interviewAI.ts (openai import must be './openai' not workspace)
+- artifacts/api-server/src/routes/sessions.ts (all db imports from '@workspace/db')
+- artifacts/screengenie/src/pages/InterviewRoom.tsx (hooks from '@/hooks/use-sessions')
+Fix any 'module not found' or type errors.
+ 
+Risk 2 — Audio autoplay policy
+In use-interview-flow.ts, the unlockAudio() call must happen in a direct user gesture handler
+(the 'Begin Interview' button click). Verify the callstack is:
+button onClick → unlockAudio() → audioRef.current.play()
+If audio doesn't play, the AudioContext is probably suspended — add ctx.resume() after creation.
+ 
+Risk 3 — SSE streaming in Express
+Verify the sessions.ts route sets these headers for SSE routes:
+res.setHeader('Content-Type', 'text/event-stream');
+res.setHeader('Cache-Control', 'no-cache');
+res.setHeader('Connection', 'keep-alive');
+res.flushHeaders();  ← ADD THIS — required for Express to start streaming immediately
+Without flushHeaders(), the client won't receive chunks until the response ends.
+ 
+Risk 4 — CORS for SSE
+The Express app.ts already has cors() middleware.
+Verify it allows the frontend dev server origin (usually http://localhost:5173 on Replit).
+If needed, change to: app.use(cors({ origin: '*' }));
+ 
+Risk 5 — Candidate name in session creation
+In InterviewRoom.tsx, when creating the session we need the candidate's name.
+The interview object from useGetInterview has a candidateId.
+Make sure we're fetching the candidate record and using candidate.name.
+If useGetCandidate(candidateId) is not available, use:
+fetch(`/api/candidates/${interview.candidateId}`).then(r => r.json())
+ 
+Run this test flow end to end:
+1. HR: Create job → Add candidate → Schedule interview (set Medium difficulty, 15 min, female voice)
+2. Copy the interview link /interview/:id
+3. Candidate: Open the link → camera check → click 'Start Interview'
+4. Confirm avatar appears, hears first question spoken aloud
+5. Click Submit Answer (mic records) → transcript appears → AI responds
+6. Click 'End Interview' → confirmation → scores page appears with numbers
+7. HR: Check Candidates page → score badge is visible on candidate row
+Fix any errors encountered at each step.
