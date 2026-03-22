@@ -1,472 +1,265 @@
-# ScreenGenie.ai — Complete Project Manifest
+# ScreenGenie.ai
 
-## 1. Project Overview
+AI-powered HR interview screening platform. HR admins create job postings, import candidates, schedule AI-driven live interviews, and review scored evaluation reports — all from one dashboard.
 
-**ScreenGenie.ai** is an AI-driven HR interview screening SaaS platform built as a pnpm monorepo. It enables HR managers to create job postings, import candidates via CSV, send interview invitations, conduct live proctored video interviews, and evaluate candidates with AI-generated scoring and feedback.
+Candidates take live voice interviews with a GPT-4o AI interviewer that speaks questions aloud, listens to answers, runs coding challenges, monitors for suspicious behavior, and produces a detailed evaluation report with a hire/no-hire verdict.
 
-**Tech Stack:**
-- **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS + Shadcn UI + Wouter (routing) + TanStack React Query
-- **Backend:** Express 5 + TypeScript
-- **Database:** PostgreSQL + Drizzle ORM
-- **API Contract:** OpenAPI 3.1.0 → Orval codegen → Zod schemas + React Query hooks
-- **UI Libraries:** Lucide React (icons), Framer Motion (animations), Recharts (charts)
-- **Monorepo:** pnpm workspaces with shared libraries
+## Features
 
----
+### HR Admin Side
 
-## 2. Complete File Tree
+- **Dashboard** — overview stats (total jobs, candidates, pending interviews, completed, hired), weekly applicant chart, quick action links
+- **Job Management** — create, edit, and manage job postings with title, description, skills, and status (Open / Closed / Draft)
+- **Candidate Pipeline** — add candidates manually or bulk-import from CSV; filter by job, search by name/email; view color-coded AI scores (green >= 70, yellow 50-69, red < 50)
+- **Interview Scheduling** — configure AI interview settings per candidate: experience level (Fresher / Lenient / Medium / Hard), duration (15-60 min), interviewer voice gender, coding challenge toggle, custom prepared questions
+- **Trigger Interview Invites** — batch-send interview links to all pending candidates for a job
+- **Evaluation Reports** — ranked leaderboard with final verdict labels (Strong Hire / Hire / Lean Hire / Lean No Hire / No Hire / Strong No Hire), expandable report sections for strengths, areas for improvement, AI suspicion analysis, and interview transcript
+
+### Candidate Side
+
+- **Interview Room** — full-screen interview experience with dark theme
+  - **Tech Check Lobby** — verify camera, microphone, and screen permissions before starting
+  - **5-Second Countdown** — brief preparation period after clicking Start
+  - **Live AI Interviewer** — animated avatar (JarvisOrb) that speaks questions via text-to-speech and listens for answers via speech-to-text
+  - **Progressive Difficulty** — the AI adapts strictness based on answer quality, ramping from warm-up questions to deep technical challenges
+  - **Coding Editor** — integrated Monaco Editor with syntax highlighting, code execution via Wandbox (supports 20 languages), and AI code review
+  - **Camera Proctoring** — real-time camera feed monitoring with tab-switch and focus-loss detection
+  - **Strictness Meter** — visual indicator of the AI's current difficulty level
+  - **Timer** — countdown to interview end with automatic wrap-up
+  - **Thank You Screen** — displays final evaluation scores after the interview ends
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, Vite, TypeScript, Tailwind CSS |
+| UI Components | Shadcn/ui, Radix UI, Lucide React icons |
+| Routing | Wouter |
+| State Management | TanStack React Query |
+| Code Editor | Monaco Editor (@monaco-editor/react) |
+| Animations | Framer Motion |
+| Charts | Recharts |
+| Backend | Express 5, TypeScript |
+| Database | PostgreSQL, Drizzle ORM |
+| AI Chat | OpenAI GPT-4o (streaming via SSE) |
+| Text-to-Speech | OpenAI TTS (tts-1 model) |
+| Speech-to-Text | OpenAI Whisper (gpt-4o-mini-transcribe) |
+| Code Execution | Wandbox API (20 languages) |
+| Monorepo | pnpm workspaces |
+| API Codegen | Orval (OpenAPI 3.1 spec) |
+| Validation | Zod v4, drizzle-zod |
+| Build | esbuild (CJS bundle for production) |
+
+## Project Structure
 
 ```
-ScreenGenie_MVP/
-├── package.json                          # Root workspace config
-├── pnpm-workspace.yaml                   # pnpm workspace declaration
-├── tsconfig.base.json                    # Shared TypeScript config
-├── tsconfig.json                         # Root TypeScript references
-├── .npmrc                                # pnpm settings
-├── .replit                               # Replit run configuration
-├── .replitignore                         # Replit ignore patterns
-├── .gitignore
-├── replit.md                             # Project documentation
-│
+screengenie/
 ├── artifacts/
-│   ├── api-server/                       # ── EXPRESS 5 BACKEND ──
-│   │   ├── package.json
-│   │   ├── build.ts                      # esbuild bundler config
-│   │   ├── tsconfig.json
-│   │   ├── .replit-artifact/
-│   │   │   └── artifact.toml             # Replit artifact config
+│   ├── api-server/                 # Express API server
 │   │   └── src/
-│   │       ├── index.ts                  # Server entry point (PORT binding)
-│   │       ├── app.ts                    # Express app setup (CORS, JSON, router mount)
-│   │       ├── lib/
-│   │       │   └── email.ts              # Mock email sender utility
-│   │       ├── middlewares/
-│   │       │   └── .gitkeep
-│   │       └── routes/
-│   │           ├── index.ts              # Central router aggregator
-│   │           ├── health.ts             # GET /api/health
-│   │           ├── users.ts              # GET/POST /api/users, GET/PUT /api/users/:id
-│   │           ├── jobs.ts               # Full job CRUD + evaluate + results
-│   │           ├── candidates.ts         # Candidate CRUD + bulk CSV import
-│   │           ├── interviews.ts         # Interview CRUD + start/end lifecycle
-│   │           ├── schedule.ts           # Public scheduling endpoints
-│   │           └── dashboard.ts          # GET /api/dashboard/stats
-│   │
-│   └── screengenie/                      # ── REACT + VITE FRONTEND ──
-│       ├── package.json
-│       ├── index.html                    # Vite HTML entry
-│       ├── vite.config.ts                # Vite config (proxy, base path)
-│       ├── components.json               # Shadcn UI config
-│       ├── tsconfig.json
-│       ├── requirements.yaml             # Feature requirements
-│       ├── .replit-artifact/
-│       │   └── artifact.toml
-│       ├── public/
-│       │   ├── favicon.svg
-│       │   └── opengraph.jpg
+│   │       ├── app.ts              # Express app setup (CORS, body parser, routes)
+│   │       ├── index.ts            # Server entry point
+│   │       ├── routes/             # API route handlers
+│   │       │   ├── index.ts        # Route aggregator
+│   │       │   ├── jobs.ts         # Job CRUD + evaluation + results
+│   │       │   ├── candidates.ts   # Candidate CRUD + bulk import
+│   │       │   ├── interviews.ts   # Interview CRUD + start/end
+│   │       │   ├── sessions.ts     # AI session lifecycle (SSE streaming, TTS, STT, proctoring)
+│   │       │   ├── schedule.ts     # Public scheduling endpoint
+│   │       │   ├── code.ts         # Wandbox code execution proxy
+│   │       │   └── ...
+│   │       └── lib/
+│   │           ├── interviewAI.ts  # GPT-4o interview logic (streaming, evaluation, prompts)
+│   │           ├── audio.ts        # TTS wrapper
+│   │           ├── openai.ts       # OpenAI client configuration
+│   │           └── email.ts        # Mock email utility
+│   └── screengenie/                # React + Vite frontend
 │       └── src/
-│           ├── main.tsx                  # React DOM entry
-│           ├── App.tsx                   # Router + providers setup
-│           ├── index.css                 # Tailwind + global styles
-│           ├── lib/
-│           │   └── utils.ts              # cn() utility
-│           ├── hooks/
-│           │   ├── use-mobile.tsx         # Responsive breakpoint hook
-│           │   └── use-toast.ts           # Toast notification hook
-│           ├── components/
-│           │   ├── layout/
-│           │   │   ├── AppLayout.tsx      # Sidebar + main content layout
-│           │   │   └── Sidebar.tsx        # Navigation sidebar
-│           │   └── ui/                   # ~50 Shadcn UI components
-│           │       ├── button.tsx
-│           │       ├── card.tsx
-│           │       ├── dialog.tsx
-│           │       ├── table.tsx
-│           │       ├── calendar.tsx
-│           │       ├── progress.tsx
-│           │       ├── badge.tsx
-│           │       ├── toast.tsx
-│           │       ├── toaster.tsx
-│           │       ├── modal.tsx
-│           │       └── ... (40+ more)
-│           └── pages/
-│               ├── Dashboard.tsx          # HR dashboard with stats + charts
-│               ├── Jobs.tsx               # Job listings table
-│               ├── NewJob.tsx             # Create job form
-│               ├── JobDetail.tsx          # Job detail + Pipeline/Results tabs
-│               ├── JobResults.tsx         # AI evaluation leaderboard + report modal
-│               ├── Candidates.tsx         # All candidates table
-│               ├── Schedule.tsx           # Public candidate scheduling page
-│               ├── InterviewRoom.tsx      # Full interview room (lobby → active → end)
-│               ├── Settings.tsx           # User/company settings
-│               └── not-found.tsx          # 404 page
-│
+│           ├── App.tsx             # Root app with routing
+│           ├── pages/              # Page components
+│           │   ├── Dashboard.tsx
+│           │   ├── Jobs.tsx
+│           │   ├── JobDetail.tsx
+│           │   ├── JobResults.tsx
+│           │   ├── Candidates.tsx
+│           │   ├── Schedule.tsx
+│           │   ├── InterviewRoom.tsx
+│           │   └── Settings.tsx
+│           ├── hooks/              # Custom React hooks
+│           │   ├── use-interview-flow.ts  # Interview SSE + audio orchestration
+│           │   ├── use-sessions.ts        # Session CRUD hooks
+│           │   └── use-audio-recorder.ts  # Microphone recording
+│           └── components/
+│               ├── interview/      # Interview UI components
+│               │   ├── JarvisOrb.tsx
+│               │   ├── InterviewerAvatar.tsx
+│               │   ├── CodeEditor.tsx
+│               │   ├── CameraProctor.tsx
+│               │   └── StrictnessMeter.tsx
+│               ├── layout/         # App shell & navigation
+│               └── ui/             # Shadcn/Radix UI primitives
 ├── lib/
-│   ├── api-spec/                         # ── OPENAPI SPECIFICATION ──
-│   │   ├── package.json
-│   │   ├── orval.config.ts               # Orval codegen config
-│   │   └── openapi.yaml                  # OpenAPI 3.1.0 spec (source of truth)
-│   │
-│   ├── api-client-react/                 # ── GENERATED REACT QUERY CLIENT ──
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   ├── src/
-│   │   │   ├── index.ts                  # Re-exports
-│   │   │   ├── custom-fetch.ts           # Custom fetch with base URL
-│   │   │   └── generated/
-│   │   │       ├── api.ts                # Generated React Query hooks
-│   │   │       └── api.schemas.ts        # Generated TypeScript types
-│   │   └── dist/                         # Compiled output
-│   │
-│   ├── api-zod/                          # ── GENERATED ZOD VALIDATORS ──
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   └── generated/
-│   │   │       ├── api.ts                # Generated Zod schemas
-│   │   │       └── types/                # Individual type modules
-│   │   │           ├── index.ts
-│   │   │           ├── candidate.ts
-│   │   │           ├── job.ts
-│   │   │           ├── interview.ts
-│   │   │           ├── user.ts
-│   │   │           ├── evaluatedCandidate.ts
-│   │   │           ├── evaluationResponse.ts
-│   │   │           ├── scheduleInfo.ts
-│   │   │           ├── submitScheduleBody.ts
-│   │   │           ├── triggerInvitesResponse.ts
-│   │   │           └── ... (15+ more)
-│   │   └── dist/                         # Compiled output
-│   │
-│   └── db/                               # ── DATABASE LAYER ──
-│       ├── package.json
-│       ├── drizzle.config.ts             # Drizzle Kit config
-│       ├── tsconfig.json
-│       ├── src/
-│       │   ├── index.ts                  # DB connection + Drizzle instance export
-│       │   └── schema/
-│       │       ├── index.ts              # Schema barrel export
-│       │       ├── users.ts              # Users table
-│       │       ├── jobs.ts               # Jobs table
-│       │       ├── candidates.ts         # Candidates table
-│       │       └── interviews.ts         # Interviews table
-│       └── dist/                         # Compiled output
-│
-└── scripts/
-    ├── package.json
-    ├── tsconfig.json
-    ├── post-merge.sh                     # Post-merge environment reconciliation
-    └── src/
-        └── hello.ts
+│   ├── db/                         # Drizzle ORM schema + connection
+│   │   └── src/schema/
+│   │       ├── users.ts
+│   │       ├── jobs.ts
+│   │       ├── candidates.ts
+│   │       ├── interviews.ts
+│   │       ├── sessions.ts
+│   │       └── sessionMessages.ts
+│   ├── api-spec/                   # OpenAPI 3.1 spec + Orval config
+│   ├── api-client-react/           # Generated React Query hooks
+│   └── api-zod/                    # Generated Zod validation schemas
+├── database_schema.sql             # pg_dump of current schema
+├── pnpm-workspace.yaml
+└── package.json
 ```
 
----
-
-## 3. Database Schema (Drizzle ORM)
+## Database Tables
 
 ### users
-```typescript
-export const usersTable = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  name: text("name").notNull(),
-  company: text("company").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-```
+HR admin accounts.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial PK | Auto-increment ID |
+| email | text | Unique email address |
+| name | text | Full name |
+| company | text | Company name |
+| created_at | timestamp | Account creation time |
 
 ### jobs
-```typescript
-export const jobsTable = pgTable("jobs", {
-  id: serial("id").primaryKey(),
-  hrId: integer("hr_id").notNull().references(() => usersTable.id),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  skills: text("skills").notNull(),        // Comma-separated skill tags
-  status: text("status").notNull().default("OPEN"),  // OPEN | CLOSED
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-```
+Job postings created by HR admins.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial PK | Auto-increment ID |
+| hr_id | int FK -> users | HR admin who created the job |
+| title | text | Job title |
+| description | text | Full job description |
+| skills | text | Comma-separated skills |
+| status | text | OPEN, CLOSED, or DRAFT |
+| created_at | timestamp | Creation time |
 
 ### candidates
-```typescript
-export const candidatesTable = pgTable("candidates", {
-  id: serial("id").primaryKey(),
-  jobId: integer("job_id").notNull().references(() => jobsTable.id),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone"),
-  status: text("status").notNull().default("PENDING"),
-    // PENDING → INVITED → SCHEDULED → INTERVIEWED → HIRED | REJECTED
-  score: integer("score"),                 // AI-assigned 0–100
-  resumeUrl: text("resume_url"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-```
+Job applicants linked to a specific job.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial PK | Auto-increment ID |
+| job_id | int FK -> jobs | Associated job posting |
+| name | text | Candidate full name |
+| email | text | Email address |
+| phone | text | Phone number |
+| status | text | PENDING, INVITED, SCHEDULED, INTERVIEWED, HIRED, REJECTED |
+| score | int | Overall AI evaluation score (1-100), null until interviewed |
+| resume_url | text | Link to uploaded resume |
+| created_at | timestamp | When the candidate was added |
 
 ### interviews
-```typescript
-export const interviewsTable = pgTable("interviews", {
-  id: serial("id").primaryKey(),
-  candidateId: integer("candidate_id").notNull().references(() => candidatesTable.id),
-  scheduledAt: timestamp("scheduled_at").notNull(),
-  status: text("status").notNull().default("SCHEDULED"),
-    // SCHEDULED → IN_PROGRESS → COMPLETED
-  attempts: integer("attempts").notNull().default(0),  // Max 2 allowed
-  transcript: text("transcript"),          // AI-generated interview transcript
-  feedback: text("feedback"),              // AI-generated evaluation feedback
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-```
+Scheduled interview records with AI configuration.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial PK | Auto-increment ID |
+| candidate_id | int FK -> candidates | Linked candidate |
+| scheduled_at | timestamp | Interview date/time |
+| status | text | SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED |
+| attempts | int | Number of attempts (max 2) |
+| transcript | text | Full interview transcript |
+| feedback | text | JSON string containing `_fullEvaluation` with scores and verdict |
+| voice_gender | text | AI interviewer voice: "male" or "female" |
+| experience_level | text | Difficulty: "fresher", "lenient", "medium", "hard" |
+| duration_minutes | int | Interview length in minutes |
+| coding_enabled | boolean | Whether coding challenges are included |
+| questions | text[] | Custom prepared interview questions |
+| created_at | timestamp | Creation time |
 
-### Entity Relationships
+### sessions
+Active AI interview session state.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial PK | Auto-increment ID |
+| interview_id | int FK -> interviews (CASCADE) | Parent interview |
+| candidate_name | text | Candidate's display name |
+| status | text | "active" or "completed" |
+| current_strictness | int | AI strictness level (1-10) |
+| questions_asked | int | Number of questions asked so far |
+| overall_score | int | Final overall score (1-100) |
+| feedback | text | JSON evaluation data |
+| started_at | timestamptz | Session start time |
+| ended_at | timestamptz | Session end time |
+| tab_switch_count | int | Number of tab switches detected |
+| focus_lost_count | int | Number of focus losses detected |
+| id_verified | boolean | Whether ID was verified |
+| id_verification_data | jsonb | ID verification metadata |
+| proctoring_flags | jsonb | Array of proctoring events |
+| created_at | timestamptz | Creation time |
 
-```
-User (HR Manager)
-  │
-  └──< Job (1:N — one HR user creates many jobs)
-        │
-        └──< Candidate (1:N — one job has many candidates)
-              │
-              └──< Interview (1:N — one candidate can have multiple interview attempts)
-```
+### session_messages
+Conversation messages within an interview session.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | serial PK | Auto-increment ID |
+| session_id | int FK -> sessions (CASCADE) | Parent session |
+| role | text | "interviewer", "candidate", or "code" |
+| content | text | Message text (or code submission with metadata) |
+| question_number | int | Which question this relates to |
+| time_allotted | int | Seconds allotted for response |
+| created_at | timestamptz | Message timestamp |
 
-- **User → Job:** `jobs.hr_id` references `users.id`. Each HR manager owns their job postings.
-- **Job → Candidate:** `candidates.job_id` references `jobs.id`. Candidates are scoped to a specific job.
-- **Candidate → Interview:** `interviews.candidate_id` references `candidates.id`. Each interview attempt is tracked separately. The system enforces a max of 2 attempts via atomic SQL (`WHERE attempts < 2`).
+## Environment Variables
 
----
+| Variable | Required | Description |
+|----------|----------|-------------|
+| DATABASE_URL | Yes | PostgreSQL connection string |
+| OPENAI_API_KEY | Conditional | OpenAI API key (not needed if using Replit AI integrations) |
+| AI_INTEGRATIONS_OPENAI_BASE_URL | Conditional | Replit AI integration proxy URL (auto-set) |
+| AI_INTEGRATIONS_OPENAI_API_KEY | Conditional | Replit AI integration key (auto-set) |
 
-## 4. Frontend Routes (Wouter — React SPA)
+## Running Locally
 
-| Route | Page Component | Description |
-|-------|---------------|-------------|
-| `/` | `Dashboard.tsx` | HR overview dashboard with stat cards (total jobs, candidates, interviews, hire rate), applicant trend chart (Recharts), and quick-action buttons |
-| `/jobs` | `Jobs.tsx` | Searchable job listings table with status badges, candidate counts, creation dates. "New Job" button |
-| `/jobs/new` | `NewJob.tsx` | Job creation form with title, description, skills (tag input), auto-assigns to current HR user |
-| `/jobs/:jobId` | `JobDetail.tsx` | Job info card + tabbed interface: **Pipeline tab** (CSV uploader, candidate table, "Trigger Interview Invites") and **Results tab** (AI evaluation dashboard) |
-| `/candidates` | `Candidates.tsx` | All-candidates table with status badges, scores, job association. Filterable by job |
-| `/schedule/:candidateId` | `Schedule.tsx` | Public-facing scheduling page. Candidate picks interview date/time from calendar. Creates interview record |
-| `/interview/:interviewId` | `InterviewRoom.tsx` | Full interview experience: Tech Check Lobby → Active Interview → Thank You |
-| `/settings` | `Settings.tsx` | User profile and company settings form |
-| `*` | `not-found.tsx` | 404 catch-all page |
+1. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
----
+2. Set environment variables:
+   ```bash
+   export DATABASE_URL="postgresql://..."
+   export OPENAI_API_KEY="sk-..."
+   ```
 
-## 5. API Route Breakdown (Express 5)
+3. Push database schema:
+   ```bash
+   pnpm --filter @workspace/db run push
+   ```
 
-All routes are prefixed with `/api`.
+4. Start both servers:
+   ```bash
+   # Terminal 1: API server
+   PORT=8080 pnpm --filter @workspace/api-server run dev
 
-### Health
-| Method | Endpoint | Handler File | Description |
-|--------|----------|-------------|-------------|
-| `GET` | `/api/health` | `health.ts` | Returns `{ status: "ok", timestamp }` |
+   # Terminal 2: Frontend
+   PORT=23515 BASE_PATH=/ pnpm --filter @workspace/screengenie run dev
+   ```
 
-### Dashboard
-| Method | Endpoint | Handler File | Description |
-|--------|----------|-------------|-------------|
-| `GET` | `/api/dashboard/stats` | `dashboard.ts` | Returns aggregate stats: total jobs, candidates, interviews, hire rate, monthly trend data |
+5. Open the app at `http://localhost:23515`
 
-### Users
-| Method | Endpoint | Handler File | Description |
-|--------|----------|-------------|-------------|
-| `GET` | `/api/users` | `users.ts` | List all users |
-| `POST` | `/api/users` | `users.ts` | Create a user (name, email, company) |
-| `GET` | `/api/users/:id` | `users.ts` | Get user by ID |
-| `PUT` | `/api/users/:id` | `users.ts` | Update user |
+## How the AI Interview Works
 
-### Jobs
-| Method | Endpoint | Handler File | Description |
-|--------|----------|-------------|-------------|
-| `GET` | `/api/jobs` | `jobs.ts` | List all jobs with candidate counts (LEFT JOIN + GROUP BY) |
-| `POST` | `/api/jobs` | `jobs.ts` | Create a job |
-| `GET` | `/api/jobs/:id` | `jobs.ts` | Get single job with candidate count |
-| `PUT` | `/api/jobs/:id` | `jobs.ts` | Update job |
-| `DELETE` | `/api/jobs/:id` | `jobs.ts` | Delete job |
-| `POST` | `/api/jobs/:id/trigger-invites` | `jobs.ts` | Batch-update all PENDING candidates to INVITED. Logs mock emails via `email.ts` |
-| `POST` | `/api/jobs/:id/evaluate` | `jobs.ts` | Run AI evaluation on all INTERVIEWED candidates. Assigns random score (40–98), generates mock feedback + transcript, sets HIRED (>80) or REJECTED (≤80) |
-| `GET` | `/api/jobs/:id/results` | `jobs.ts` | Returns all candidates for job with latest interview data. Uses `LEFT JOIN LATERAL` to deduplicate multiple interview attempts per candidate |
+1. **HR schedules an interview** — sets difficulty level, duration, voice preference, and optional custom questions for the candidate.
 
-### Candidates
-| Method | Endpoint | Handler File | Description |
-|--------|----------|-------------|-------------|
-| `GET` | `/api/candidates` | `candidates.ts` | List candidates (supports `?jobId=` filter) |
-| `POST` | `/api/candidates` | `candidates.ts` | Create single candidate |
-| `POST` | `/api/candidates/bulk` | `candidates.ts` | Bulk import from CSV (expects `{jobId, candidates: [{name, email, phone}]}`) |
-| `GET` | `/api/candidates/:id` | `candidates.ts` | Get candidate by ID |
-| `PUT` | `/api/candidates/:id` | `candidates.ts` | Update candidate (status, score, etc.) |
+2. **Candidate opens the interview link** — arrives at the tech-check lobby to verify camera, microphone, and screen access.
 
-### Schedule (Public)
-| Method | Endpoint | Handler File | Description |
-|--------|----------|-------------|-------------|
-| `GET` | `/api/schedule/:candidateId` | `schedule.ts` | Get candidate + job info for scheduling UI |
-| `POST` | `/api/schedule/:candidateId` | `schedule.ts` | Submit chosen date/time. Creates interview record, updates candidate status to SCHEDULED. Idempotent (rejects if already scheduled) |
+3. **Interview begins** — the AI interviewer greets the candidate by name with a time-appropriate greeting, introduces itself, and asks the first question. The question is spoken aloud via OpenAI TTS.
 
-### Interviews
-| Method | Endpoint | Handler File | Description |
-|--------|----------|-------------|-------------|
-| `GET` | `/api/interviews` | `interviews.ts` | List interviews (supports `?candidateId=` filter) |
-| `POST` | `/api/interviews` | `interviews.ts` | Create interview |
-| `GET` | `/api/interviews/:id` | `interviews.ts` | Get interview by ID |
-| `PUT` | `/api/interviews/:id` | `interviews.ts` | Update interview |
-| `POST` | `/api/interviews/:id/start` | `interviews.ts` | Start interview session. Atomic `WHERE attempts < 2` check. Increments attempts, sets status IN_PROGRESS. Returns 403 if locked out |
-| `POST` | `/api/interviews/:id/end` | `interviews.ts` | End interview. Sets status COMPLETED, updates candidate to INTERVIEWED |
+4. **Continuous Q&A loop** — the candidate speaks their answer, which is recorded via the browser microphone and transcribed using OpenAI Whisper. The AI interviewer processes the answer using GPT-4o with a detailed system prompt that controls behavior, difficulty progression, and response format (JSON with strictness, time allotment, suspicion level, etc.). The AI's response is spoken via TTS and the loop repeats.
 
----
+5. **Progressive difficulty** — the AI adapts its strictness level within the configured range based on answer quality. Strong answers increase difficulty; weak answers slightly decrease it. The interview progresses through phases: warm-up, mid-depth, deep technical, and final stress-test.
 
-## 6. Key Components
+6. **Coding phase** — if enabled, the last ~10 minutes shift to coding challenges. The candidate writes code in the integrated Monaco Editor, can execute it via Wandbox, and submit it for AI review. The AI analyzes code quality, correctness, and approach.
 
-### Layout Components
-| Component | File | Description |
-|-----------|------|-------------|
-| `AppLayout` | `components/layout/AppLayout.tsx` | Main layout wrapper with sidebar + content area. Wraps all authenticated pages |
-| `Sidebar` | `components/layout/Sidebar.tsx` | Navigation sidebar with ScreenGenie logo, nav links (Dashboard, Jobs, Candidates, Settings), active route highlighting, user profile footer |
+7. **Proctoring** — throughout the interview, the system tracks tab switches, focus losses, and camera status. These events are logged as proctoring flags on the session.
 
-### Page-Level Feature Components
+8. **AI cheating detection** — the AI monitors for signs of external assistance (suspiciously perfect answers, unnatural pauses, inconsistent depth) and tracks a suspicion level (0-10). It uses counter-techniques like rapid follow-ups, asking for simpler explanations, and opinion-based questions.
 
-#### Dashboard (`Dashboard.tsx`)
-- Stat cards with animated counters (Total Jobs, Candidates, Interviews, Hire Rate)
-- Area chart showing applicant trends over time (Recharts)
-- Quick action buttons (Create Job, View Candidates)
+9. **Evaluation** — when the interview ends (time up or manual end), GPT-4o generates a comprehensive evaluation scoring 9 dimensions (1-100 each): Technical Knowledge, Communication, Problem Solving, Confidence, Depth of Understanding, Emotional Resilience, Pressure Handling, Code Quality, and Overall. It also produces a written feedback summary, strengths list, improvements list, AI suspicion report, and a final verdict (Strong Hire / Hire / Lean Hire / Lean No Hire / No Hire / Strong No Hire).
 
-#### CSV Uploader (inside `JobDetail.tsx`)
-- Drag-and-drop zone with visual feedback
-- CSV parsing with column validation (Name, Email, Phone required)
-- Preview table before import confirmation
-- Bulk upload via `POST /api/candidates/bulk`
-- Success/error toast notifications
-
-#### Candidate Pipeline Table (inside `JobDetail.tsx`)
-- Sortable table with status badges (color-coded: PENDING=gray, INVITED=blue, SCHEDULED=amber, etc.)
-- "Trigger Interview Invites" button for batch status update
-- Row click navigation to candidate details
-
-#### AI Evaluation Dashboard (`JobResults.tsx`)
-- "Run AI Evaluation" button with loading state
-- Success banner showing hire/reject counts
-- **Ranked Leaderboard Table:**
-  - Crown/Medal/Award icons for rank 1/2/3
-  - Top 10% candidates highlighted with amber background + star icon
-  - Score progress bar (green >80, amber >60, red <60)
-  - HIRED/REJECTED status badges with CheckCircle/XCircle icons
-- **View Report Modal** (Shadcn Dialog):
-  - Large score display with colored progress ring
-  - AI Feedback section with evaluation paragraph
-  - Interview Transcript section with formatted Q&A
-
-#### Schedule Page (`Schedule.tsx`)
-- Public-facing page (no sidebar layout)
-- Shows candidate name + job title
-- Calendar date picker (Shadcn Calendar)
-- Time slot selector (9 AM – 5 PM, 1-hour blocks)
-- Submit button with loading state
-- Success confirmation with scheduled date/time display
-
-#### Interview Room (`InterviewRoom.tsx`)
-- **State Machine:** LOADING → LOBBY → ACTIVE → ENDED
-- **Tech Check Lobby:**
-  - Camera preview via `getUserMedia()` with live video feed
-  - Microphone test with audio level indicator
-  - Screen share setup via `getDisplayMedia()` with preview
-  - Device permission error handling
-  - "Begin Interview" button (disabled until all devices ready)
-- **Lockout State:** Shown when `attempts >= 2` — displays warning with lock icon
-- **Active Interview:**
-  - Camera PiP (picture-in-picture) in corner
-  - Audio visualizer animation (AnalyserNode + canvas waveform)
-  - Recording indicator (pulsing red dot + elapsed time)
-  - Screen share active indicator
-  - Tab proctoring via `visibilitychange` event (warns on tab switch)
-  - "End Interview" button
-- **Thank You Page:** Confirmation message after interview completion
-
----
-
-## 7. OpenAPI Codegen Pipeline
-
-```
-openapi.yaml  →  orval codegen  →  api-zod (Zod schemas)
-                                →  api-client-react (React Query hooks + types)
-```
-
-**Workflow:**
-1. Edit `lib/api-spec/openapi.yaml` (source of truth)
-2. Run `pnpm --filter @workspace/api-spec run codegen`
-3. Generates:
-   - `lib/api-zod/src/generated/` — Zod validation schemas used by the Express backend
-   - `lib/api-client-react/src/generated/` — React Query hooks (`useGetJobs`, `useCreateJob`, etc.) + TypeScript types used by the frontend
-
----
-
-## 8. Candidate Lifecycle State Machine
-
-```
-PENDING ──[Trigger Invites]──→ INVITED ──[Schedule]──→ SCHEDULED
-                                                          │
-                                                    [Start Interview]
-                                                          │
-                                                          ▼
-                                                    INTERVIEWED
-                                                     │         │
-                                              [AI: score>80] [AI: score≤80]
-                                                     │         │
-                                                     ▼         ▼
-                                                   HIRED    REJECTED
-```
-
----
-
-## 9. Interview Attempt Lifecycle
-
-```
-Interview Created (SCHEDULED, attempts=0)
-         │
-    [POST /start]  ← atomic WHERE attempts < 2
-         │
-   IN_PROGRESS (attempts=1)
-         │
-    [POST /end]
-         │
-   COMPLETED + candidate→INTERVIEWED
-         │
-   [If candidate retries → new interview record]
-         │
-    [POST /start]  ← attempts < 2 check
-         │
-   IN_PROGRESS (attempts=2)
-         │
-    [POST /start]  ← BLOCKED (403 Forbidden — max attempts reached)
-```
-
----
-
-## 10. Environment & Configuration
-
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string (auto-provided by Replit) |
-| `PORT` | Server port (auto-assigned per artifact) |
-| `NODE_ENV` | Environment flag |
-
-**Dev Servers:**
-- Frontend (Vite): Proxied through Replit at `/` path
-- Backend (Express): Proxied through Replit at `/api` path prefix
-- API Server binds to `PORT` env var, frontend proxies `/api` requests to it
-
----
-
-## 11. Design System
-
-- **Color Palette:** White/gray enterprise theme with blue accents
-- **Component Library:** Shadcn UI (50+ components)
-- **Icons:** Lucide React
-- **Animations:** Framer Motion for page transitions and micro-interactions
-- **Charts:** Recharts for data visualization
-- **Typography:** System font stack via Tailwind CSS
-- **Responsive:** Mobile-aware with `use-mobile` hook
-
----
-
-*Generated: March 16, 2026*
-*Version: MVP 1.0*
+10. **Results** — the candidate's score and status are updated in the database. HR admins can view ranked leaderboards, read detailed evaluation reports, and make hiring decisions.

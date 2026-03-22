@@ -106,11 +106,11 @@ export default function JobResults({ jobId }: JobResultsProps) {
   };
 
   const evaluatedCandidates = (results || []).filter(
-    (c) => c.status === "HIRED" || c.status === "REJECTED"
+    (c) => c.status === "HIRED" || c.status === "REJECTED" || (c.status === "INTERVIEWED" && c.score != null)
   );
 
   const interviewedCount = (results || []).filter(
-    (c) => c.status === "INTERVIEWED"
+    (c) => c.status === "INTERVIEWED" && c.score == null
   ).length;
 
   const topTenPercentThreshold = evaluatedCandidates.length > 0
@@ -309,8 +309,10 @@ export default function JobResults({ jobId }: JobResultsProps) {
                         >
                           {candidate.status === "HIRED" ? (
                             <CheckCircle2 className="w-3 h-3" />
-                          ) : (
+                          ) : candidate.status === "REJECTED" ? (
                             <XCircle className="w-3 h-3" />
+                          ) : (
+                            <Star className="w-3 h-3" />
                           )}
                           {candidate.status}
                         </span>
@@ -400,8 +402,10 @@ function ReportDialog({ candidate, onClose }: { candidate: any; onClose: () => v
                 >
                   {candidate.status === "HIRED" ? (
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                  ) : (
+                  ) : candidate.status === "REJECTED" ? (
                     <XCircle className="w-3.5 h-3.5" />
+                  ) : (
+                    <Star className="w-3.5 h-3.5" />
                   )}
                   {candidate.status}
                 </span>

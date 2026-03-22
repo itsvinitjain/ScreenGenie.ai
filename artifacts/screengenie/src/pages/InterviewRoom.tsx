@@ -145,7 +145,7 @@ export default function InterviewRoom() {
               if (!mountedRef.current) return;
               endSessionMutation.mutateAsync({ id: sessionId! }).then((data: any) => {
                 if (mountedRef.current) {
-                  setEvaluation(data?.evaluation || null);
+                  setEvaluation(data || null);
                   setState("thankyou");
                 }
               });
@@ -178,7 +178,7 @@ export default function InterviewRoom() {
           if (!mountedRef.current) return;
           endSessionMutation.mutateAsync({ id: sessionId }).then((data: any) => {
             if (mountedRef.current) {
-              setEvaluation(data?.evaluation || null);
+              setEvaluation(data || null);
               setState("thankyou");
             }
           });
@@ -348,7 +348,7 @@ export default function InterviewRoom() {
     autoEndTriggered.current = true;
     try {
       const data: any = await endSessionMutation.mutateAsync({ id: sessionId });
-      setEvaluation(data?.evaluation || null);
+      setEvaluation(data || null);
     } catch {}
     if (mountedRef.current) setState("thankyou");
   }, [sessionId, endSessionMutation]);
@@ -358,7 +358,7 @@ export default function InterviewRoom() {
     if (confirm("Are you sure you want to terminate the interview early?")) {
       try {
         const data: any = await endSessionMutation.mutateAsync({ id: sessionId });
-        setEvaluation(data?.evaluation || null);
+        setEvaluation(data || null);
       } catch {}
       setState("thankyou");
     }

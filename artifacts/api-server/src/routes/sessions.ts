@@ -475,6 +475,10 @@ router.post("/sessions/:id/speak", async (req, res): Promise<void> => {
     const voice = bodyVoice || getVoiceForGender(interview?.voiceGender || "female");
 
     const audioBuffer = await textToSpeech(text, voice, "mp3");
+    if (!audioBuffer) {
+      res.json({ audioBase64: null });
+      return;
+    }
     const audioBase64 = audioBuffer.toString("base64");
 
     res.json({ audioBase64 });

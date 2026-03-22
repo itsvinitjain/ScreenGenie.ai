@@ -1,0 +1,64 @@
+Final QA, Fix, Document & Ship
+You are working on ScreenGenie.ai — a full-stack AI-powered hiring platform.
+An HR admin creates jobs, imports candidates, schedules AI interviews, and reviews
+scored evaluation reports. Candidates take live voice interviews with a GPT-4o
+interviewer that speaks questions via TTS, listens via Whisper STT, runs live
+coding challenges in Monaco Editor, proctors via camera + tab detection, and
+produces a 9-dimension evaluation (Technical, Communication, Problem Solving,
+Confidence, Depth, Emotional Resilience, Pressure Handling, Code Quality, Overall)
+with a HIRE / NO HIRE verdict. The full stack is: React + Vite + Wouter + TanStack
+Query + Tailwind (frontend), Express + TypeScript + Drizzle ORM + PostgreSQL
+(backend), OpenAI GPT-4o + tts-1 + Whisper + Wandbox code execution, in an npm
+workspaces monorepo.
+
+Take as much time as you need. Do not rush. Work through every step completely and thoroughly before moving to the next. If something fails, stop, diagnose, fix it fully, verify it works, then continue. Thoroughness over speed.
+
+Do all of the following, in order. Do not stop until every item is done.
+1. ENVIRONMENT CHECK
+Verify OPENAI_API_KEY and DATABASE_URL are set. Run npm install at repo root.
+Run npx drizzle-kit push inside lib/db — confirm these 6 tables exist with all
+columns: users, jobs, candidates, interviews (must have voiceGender,
+experienceLevel, durationMinutes, codingEnabled, questions), sessions,
+session_messages. Start both servers and confirm zero startup errors.
+2. END-TO-END TEST — run every flow, fix every failure before moving on
+HR Flow: Create a job → add a candidate → open Schedule page → fill in
+experienceLevel=medium, durationMinutes=20, voiceGender=female, codingEnabled=true
+→ submit. Confirm the interviews row in DB has all 5 AI config columns populated
+(not null). If Schedule route isn't saving them, fix it now.
+Interview Flow: Open /interview/:id → complete tech-check lobby → click
+Start Interview → confirm session is created → 5-second countdown shows → active
+screen loads → InterviewerAvatar/orb appears → TTS audio plays first question →
+avatar animates to speaking then listening → click Submit Answer → mic records →
+transcription returns → AI responds with next question → loop repeats correctly →
+CodeEditor panel is visible and runs code → clicking End Interview calls
+/api/sessions/:id/end → evaluation scores appear → candidate status = INTERVIEWED
+→ score written to candidates table.
+HR Results Flow: Open Candidates page → confirm score badge visible on
+candidate row with correct color (green ≥70, yellow 50–69, red <50) → open job
+detail → confirm finalVerdict label and expandable evaluation panel with feedback,
+strengths, improvements, and AI suspicion report.
+Fix everything found. Common issues to check and fix:
+
+res.flushHeaders() missing from SSE routes (sessions/message, next-question)
+AudioContext not resumed — audio silently fails
+candidatesTable.score not updated in /sessions/:id/end
+Schedule route not saving AI config columns
+InterviewRoom not fetching candidate name before creating session
+Monaco Editor missing npm install @monaco-editor/react
+use-interview-flow.ts wrong queryKey causing no session refresh
+TypeScript import errors in interviewAI.ts or sessions.ts
+CORS blocking SSE from frontend dev server
+
+3. DATABASE DUMP
+Run: pg_dump $DATABASE_URL --schema-only --no-owner --no-acl > database_schema.sql
+Save it in the repo root. If pg_dump is unavailable, run npx drizzle-kit generate
+and save the output SQL files.
+4. README
+Create README.md in the repo root covering: what the app does, full feature list
+(HR side + candidate side), tech stack table, monorepo folder structure, all 6 DB
+tables with key columns described, environment variables, how to run locally, and
+a plain-English explanation of the AI interview loop and scoring system.
+5. GIT COMMIT
+Stage everything. Verify .gitignore includes node_modules/, .env, dist/.
+Then commit
+Do not ask for confirmation between steps. Run all of it. Fix all errors.
