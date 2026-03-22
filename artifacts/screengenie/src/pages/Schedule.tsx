@@ -5,6 +5,17 @@ import {
   useSubmitSchedule,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Calendar,
   Clock,
@@ -12,6 +23,12 @@ import {
   Briefcase,
   Video,
   Sparkles,
+  Bot,
+  Timer,
+  AudioLines,
+  Code2,
+  MessageSquareText,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, addDays, setHours, setMinutes } from "date-fns";
@@ -62,6 +79,12 @@ export default function Schedule() {
     scheduledAt: string;
   } | null>(null);
 
+  const [experienceLevel, setExperienceLevel] = useState("medium");
+  const [durationMinutes, setDurationMinutes] = useState(30);
+  const [voiceGender, setVoiceGender] = useState("female");
+  const [codingEnabled, setCodingEnabled] = useState(false);
+  const [questions, setQuestions] = useState("");
+
   const availableDates = generateDates();
 
   const handleSubmit = () => {
@@ -70,7 +93,19 @@ export default function Schedule() {
     const scheduledAt = setMinutes(setHours(selectedDate, hours), minutes);
 
     submitMutation.mutate(
-      { candidateId, data: { scheduledAt: scheduledAt.toISOString() } },
+      {
+        candidateId,
+        data: {
+          scheduledAt: scheduledAt.toISOString(),
+          experienceLevel,
+          durationMinutes,
+          voiceGender,
+          codingEnabled,
+          questions: questions
+            .split("\n")
+            .filter((q) => q.trim() !== ""),
+        } as any,
+      },
       {
         onSuccess: (data) => {
           setScheduled({
@@ -154,9 +189,7 @@ export default function Schedule() {
             Hi {info.candidateName}!
           </h1>
           <p className="text-slate-600">
-            Please schedule your{" "}
-            <span className="font-semibold text-slate-900">30-minute</span>{" "}
-            interview for
+            Please schedule your interview for
           </p>
           <div className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100">
             <Briefcase className="w-4 h-4 text-indigo-600" />
@@ -244,6 +277,101 @@ export default function Schedule() {
             </div>
           )}
 
+          <div className="border-t border-slate-200 pt-6">
+            <div className="flex items-center gap-2 mb-5">
+              <Bot className="w-4 h-4 text-indigo-500" />
+              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
+                AI Interview Settings
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+                  Experience Level
+                </Label>
+                <Select value={experienceLevel} onValueChange={setExperienceLevel}>
+                  <SelectTrigger className="w-full border-slate-200 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fresher">Fresher / Entry-level (very basic questions)</SelectItem>
+                    <SelectItem value="lenient">Lenient / Easy (straightforward questions)</SelectItem>
+                    <SelectItem value="medium">Medium / Standard (balanced difficulty)</SelectItem>
+                    <SelectItem value="hard">Hard / Expert (system design + edge cases)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  <Timer className="w-3.5 h-3.5 text-slate-400" />
+                  Duration (minutes)
+                </Label>
+                <Input
+                  type="number"
+                  min={10}
+                  max={90}
+                  step={5}
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                  className="border-slate-200 bg-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  <AudioLines className="w-3.5 h-3.5 text-slate-400" />
+                  Interviewer Voice
+                </Label>
+                <Select value={voiceGender} onValueChange={setVoiceGender}>
+                  <SelectTrigger className="w-full border-slate-200 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  <Code2 className="w-3.5 h-3.5 text-slate-400" />
+                  Coding Challenge
+                </Label>
+                <div className="flex items-center gap-3 h-10">
+                  <Switch
+                    checked={codingEnabled}
+                    onCheckedChange={setCodingEnabled}
+                  />
+                  <span className="text-sm text-slate-500">
+                    {codingEnabled ? "Enabled" : "Disabled"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <Label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                <MessageSquareText className="w-3.5 h-3.5 text-slate-400" />
+                Custom Questions (optional)
+              </Label>
+              <Textarea
+                value={questions}
+                onChange={(e) => setQuestions(e.target.value)}
+                placeholder="One question per line. Leave blank to let AI generate questions automatically."
+                rows={4}
+                className="border-slate-200 bg-white resize-none text-sm"
+              />
+              <p className="text-xs text-slate-400">
+                Enter custom interview questions, one per line. If left empty, the AI interviewer will
+                generate questions based on the job description and experience level.
+              </p>
+            </div>
+          </div>
+
           {selectedDate && selectedTime && (
             <div className="pt-2">
               <div className="bg-indigo-50/50 rounded-xl p-4 mb-4 border border-indigo-100">
@@ -255,7 +383,7 @@ export default function Schedule() {
                   <span className="font-semibold text-indigo-600">
                     {selectedTime}
                   </span>{" "}
-                  — 30 minute interview
+                  — {durationMinutes} minute interview
                 </p>
               </div>
               <Button

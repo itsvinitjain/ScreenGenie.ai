@@ -7,6 +7,7 @@ import interviewsRouter from "./interviews";
 import dashboardRouter from "./dashboard";
 import scheduleRouter from "./schedule";
 import sessionsRouter from "./sessions";
+import codeRouter from "./code";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(scheduleRouter);
 router.use(candidatesRouter);
 router.use(interviewsRouter);
 router.use(sessionsRouter);
+router.use(codeRouter);
 
 export default router;

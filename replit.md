@@ -83,6 +83,7 @@ All routes are under `/api`:
 - `POST /api/sessions/:id/proctor-event` - Record proctoring events (tab switch, focus lost, etc.)
 - `POST /api/sessions/:id/code-submission` - Submit and analyze code during coding phase
 - `POST /api/sessions/:id/end` - End session, generate 9-dimension AI evaluation, update candidate/interview
+- `POST /api/code/execute` - Execute code via Wandbox sandbox (supports 20 languages: JS, TS, Python, Java, C/C++, Go, Rust, Ruby, PHP, Swift, Kotlin, Scala, Perl, R, Haskell, Lua, Bash, SQL, C#)
 
 ## Frontend Pages
 
@@ -91,8 +92,8 @@ All routes are under `/api`:
 - **New Job** (`/jobs/new`) - Job creation form
 - **Job Detail** (`/jobs/:jobId`) - Job info card with Pipeline tab (CSV uploader, candidate table, "Trigger Interview Invites") and Results tab (AI evaluation, ranked leaderboard, "View Report" modal with score/feedback/transcript)
 - **Candidates** (`/candidates`) - Candidate table with status badges, scores, job filter
-- **Schedule** (`/schedule/:candidateId`) - Public scheduling page for candidates with date/time picker
-- **Interview Room** (`/interview/:interviewId`) - Full interview interface with Tech Check Lobby (camera/mic/screen share), locked state (attempts >= 2), active interview (audio visualizer + camera PiP + tab proctoring), and thank you page
+- **Schedule** (`/schedule/:candidateId`) - Public scheduling page for candidates with date/time picker + AI Interview Settings (experience level, duration, voice gender, coding toggle, custom questions)
+- **Interview Room** (`/interview/:interviewId`) - Full AI interview: Tech Check Lobby (camera/mic/screen share) → 5s prestart countdown → Active interview (JarvisOrb/InterviewerAvatar, SSE streaming, TTS/STT, CameraProctor, StrictnessMeter, resizable CodeEditor split pane, timer with auto-end) → Thank You with AI evaluation (score/verdict/feedback). Locked state when attempts >= 2
 - **Settings** (`/settings`) - User profile/company settings form
 
 ## Mock Email Utility

@@ -1,0 +1,43 @@
+
+Add AI Config to Schedule Page + Port /code/execute Route
+HR must be able to set experience level, duration etc. when scheduling. Also add the code execution route.
+
+In artifacts/screengenie/src/pages/Schedule.tsx, add an 'AI Interview Settings' section
+to the existing scheduling form.
+ 
+New form fields to add
+experienceLevel  — Select with 4 options:
+fresher → 'Fresher / Entry-level (very basic questions)'
+lenient → 'Lenient / Easy (straightforward questions)'
+medium  → 'Medium / Standard (balanced difficulty)'  ← default
+hard    → 'Hard / Expert (system design + edge cases)'
+ 
+durationMinutes  — number input, min=10, max=90, default=30, step=5
+voiceGender      — toggle/select: 'female' | 'male', default 'female'
+codingEnabled    — Switch/checkbox, default false
+questions        — Textarea, optional, placeholder:
+'One question per line. Leave blank to let AI generate questions automatically.'
+ 
+Pass these values to the interview creation API
+When the schedule form submits and calls useCreateInterview (or the existing createInterview function),
+include these new fields in the request body:
+voiceGender, experienceLevel, durationMinutes, codingEnabled,
+questions: questions.split('\n').filter(q => q.trim() !== '')
+ 
+Style guidelines
+Match the dark slate/indigo design of the existing Schedule page.
+Use the existing Select, Switch, Textarea, Input components from @/components/ui/.
+Add a card/section header 'AI Interview Settings' above the new fields.
+📋  Prompt 7B — code execution route
+Copy the code execution route from ai-bot-demo to ScreenGenie's API server.
+ 
+Create artifacts/api-server/src/routes/code.ts by copying
+ai-bot-demo/artifacts/api-server/src/routes/code/index.ts exactly.
+ 
+This route provides POST /code/execute which runs code in a sandbox
+and returns { output, success, error }. The CodeEditor component calls
+POST /api/code/execute to run the candidate's code.
+ 
+Register it in artifacts/api-server/src/routes/index.ts:
+import codeRouter from './code';
+router.use(codeRouter);
