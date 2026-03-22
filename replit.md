@@ -15,6 +15,7 @@ AI-driven interview screening platform for HR teams. pnpm workspace monorepo usi
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
+- **AI**: OpenAI SDK (GPT-4o streaming, TTS, evaluation)
 - **Build**: esbuild (CJS bundle)
 - **Charts**: Recharts
 - **Animations**: Framer Motion
@@ -43,7 +44,9 @@ artifacts-monorepo/
 - **users** - HR users (id, email, name, company, created_at)
 - **jobs** - Job postings (id, hr_id FK->users, title, description, skills, status, created_at)
 - **candidates** - Job candidates (id, job_id FK->jobs, name, email, phone, status, score, resume_url, created_at)
-- **interviews** - Interview records (id, candidate_id FK->candidates, scheduled_at, status, attempts, transcript, feedback, created_at)
+- **interviews** - Interview records (id, candidate_id FK->candidates, scheduled_at, status, attempts, transcript, feedback, voice_gender, experience_level, questions, duration_minutes, coding_enabled, created_at)
+- **sessions** - AI interview sessions (id, interview_id FK->interviews CASCADE, candidate_name, status, current_strictness, questions_asked, overall_score, feedback, started_at, ended_at, tab_switch_count, focus_lost_count, id_verified, id_verification_data, proctoring_flags, created_at)
+- **session_messages** - Interview conversation messages (id, session_id FK->sessions CASCADE, role, content, question_number, time_allotted, created_at)
 
 ### Status Enums
 - Job status: OPEN, CLOSED, DRAFT
@@ -109,10 +112,10 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 React + Vite frontend for ScreenGenie.ai. Uses Shadcn UI components, Lucide React icons, Recharts, and Framer Motion.
 
 ### `artifacts/api-server` (`@workspace/api-server`)
-Express 5 API server with routes for users, jobs, candidates, interviews, and dashboard stats.
+Express 5 API server with routes for users, jobs, candidates, interviews, and dashboard stats. Includes OpenAI-powered AI interview lib (interviewAI.ts, audio.ts, openai.ts).
 
 ### `lib/db` (`@workspace/db`)
-Database layer with Drizzle ORM. Schema files: users.ts, jobs.ts, candidates.ts, interviews.ts.
+Database layer with Drizzle ORM. Schema files: users.ts, jobs.ts, candidates.ts, interviews.ts, sessions.ts, sessionMessages.ts.
 
 ### `lib/api-spec` (`@workspace/api-spec`)
 OpenAPI 3.1 spec and Orval codegen config.
