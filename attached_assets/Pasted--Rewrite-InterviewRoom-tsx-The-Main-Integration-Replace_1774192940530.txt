@@ -1,0 +1,95 @@
+
+Rewrite InterviewRoom.tsx (The Main Integration)
+Replace the stub InterviewRoom with the full live-interview.tsx logic, adapted to ScreenGenie's routing and data model.
+This is the biggest frontend task. The key adaptation: ai-bot-demo's live-interview.tsx works with a sessionId from the URL. ScreenGenie's InterviewRoom.tsx receives an interviewId from /interview/:interviewId. The flow is: read interviewId → fetch interview → create session → run interview.
+
+Rewrite artifacts/screengenie/src/pages/InterviewRoom.tsx completely.
+The current file is a non-functional stub. Replace it entirely.
+ 
+Routing context
+Route: /interview/:interviewId  (interviewId is a number from useRoute in wouter)
+On load: fetch the interview using the existing useGetInterview(interviewId) hook
+from '@workspace/api-client-react'. This gives us interview.candidateId and all AI config.
+ 
+State machine
+type InterviewState = 'lobby' | 'prestart' | 'active' | 'thankyou' | 'locked'
+Initial state: 'lobby'
+ 
+STATE: lobby (keep existing tech-check UI)
+Keep the existing lobby code for camera/mic/screen share checks.
+Change only the 'Start Interview' button handler:
+1. Call useCreateSessionMutation() from '@/hooks/use-sessions'
+2. On click: first fetch the candidate name from the interview's candidateId:
+GET /api/candidates  →  find candidate where id === interview.candidateId
+(or use useGetCandidates from @workspace/api-client-react if it exists)
+3. Call createSession.mutate({ interviewId, candidateName: candidate.name })
+4. On success: store sessionId in state, transition to 'prestart'
+ 
+STATE: prestart (5-second countdown)
+Show a 5-second circular countdown (copy UI from live-interview.tsx preStartCountdown block).
+Show either InterviewerAvatar (if interview.humanAvatarEnabled) or a simple Sparkles icon.
+After countdown ends: transition to 'active', call unlockAudio() then triggerNextQuestion().
+ 
+STATE: active (the live AI interview)
+Use these hooks:
+const { data: sessionData } = useSession(sessionId) from '@/hooks/use-sessions'
+const endSessionMutation = useEndSessionMutation() from '@/hooks/use-sessions'
+const { orbState, currentQuestionText, transcript, isTimeUp, isRecording,
+audioUnlocked, unlockAudio, triggerNextQuestion, submitAnswer,
+forceEndInterview } = useInterviewFlow(sessionId, interview?.voiceGender || 'female')
+from '@/hooks/use-interview-flow'
+ 
+Layout (copy from live-interview.tsx active interview layout):
+- Header: CameraProctor + interview title + countdown timer + questions count + StrictnessMeter
+- Body: If interview.codingEnabled → resizable split pane (InterviewerAvatar/orb left, CodeEditor right)
+If not → just the InterviewerAvatar/orb centered
+- Footer: Submit Answer button (active only when orbState==='listening'), Terminate button
+ 
+Timer logic (copy exactly from live-interview.tsx countdown useEffect):
+- Start countdown from sessionData.session.startedAt + interview.durationMinutes
+- When countdown hits 0 → call forceEndInterview() → then endSessionMutation → transition to thankyou
+ 
+Tab switch proctoring:
+document.addEventListener('visibilitychange', () => {
+if (document.hidden) fetch(`/api/sessions/${sessionId}/proctor-event`, {
+method:'POST', headers:{'Content-Type':'application/json'},
+body: JSON.stringify({ type:'tab_switch', timestamp: new Date().toISOString() })
+});
+});
+ 
+Code submission handler:
+const handleSubmitCode = (code, language, output) => {
+fetch(`/api/sessions/${sessionId}/code-submission`, {
+method:'POST', headers:{'Content-Type':'application/json'},
+body: JSON.stringify({ code, language, output })
+});
+};
+Pass to CodeEditor as onSubmitCode={handleSubmitCode}.
+ 
+STATE: thankyou
+After endSessionMutation succeeds, show a results summary:
+- Display evaluation.scores.overall
+- Display evaluation.finalVerdict
+- Show evaluation.feedback text
+- 'Back to Dashboard' button → setLocation('/')
+ 
+Keep unchanged from current InterviewRoom.tsx
+- The locked state (max attempts reached)
+- The loading/not-found states
+- The useRoute/useLocation imports
+- The useGetInterview hook usage
+ 
+Imports to add
+import { useCreateSessionMutation, useSession, useEndSessionMutation } from '@/hooks/use-sessions';
+import { useInterviewFlow } from '@/hooks/use-interview-flow';
+import { InterviewerAvatar } from '@/components/interview/InterviewerAvatar';
+import { JarvisOrb } from '@/components/interview/JarvisOrb';
+import { StrictnessMeter } from '@/components/interview/StrictnessMeter';
+import { CodeEditor } from '@/components/interview/CodeEditor';
+import { CameraProctor } from '@/components/interview/CameraProctor';
+✅  Done when:
+•	Opening /interview/:id shows the tech-check lobby
+•	Clicking Start Interview creates a session and shows 5-second countdown
+•	InterviewerAvatar appears and speaks the first question (TTS audio plays)
+•	Clicking Submit Answer records mic → transcribes → AI responds
+•	End Interview transitions to thankyou with scores
