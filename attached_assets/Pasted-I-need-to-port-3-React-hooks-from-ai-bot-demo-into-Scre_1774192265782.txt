@@ -1,0 +1,58 @@
+I need to port 3 React hooks from ai-bot-demo into ScreenGenie's frontend at
+artifacts/screengenie/src/hooks/.
+ 
+Hook 1: use-audio-recorder.ts
+Copy EXACTLY from ai-bot-demo/artifacts/interview-app/src/hooks/use-audio-recorder.ts
+No changes needed — it's pure React with MediaRecorder API, no external dependencies.
+ 
+Hook 2: use-interview-flow.ts
+Copy EXACTLY from ai-bot-demo/artifacts/interview-app/src/hooks/use-interview-flow.ts
+Change ONLY the import at the top:
+FROM: import { getGetSessionQueryKey } from '@workspace/api-client-react';
+TO:   (remove this import entirely — we'll use a simple manual invalidation)
+And change the invalidateSession function body:
+FROM: queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey(sessionId) });
+TO:   queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+Keep ALL other logic identical: consumeSSE, apiTextToSpeech, apiTranscribe,
+base64ToBlob, playAudioBase64, speakText, forceEndInterview, triggerNextQuestion,
+submitAnswer, unlockAudio, handleTimeUp — all identical.
+ 
+Hook 3: use-sessions.ts
+Create this file from scratch (do NOT copy from ai-bot-demo as it uses @workspace/api-client-react).
+Write using standard fetch + TanStack Query useQuery/useMutation:
+ 
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+ 
+export function useSession(sessionId: number) {
+return useQuery({
+queryKey: ['session', sessionId],
+queryFn: () => fetch(`/api/sessions/${sessionId}`).then(r => r.json()),
+enabled: !!sessionId,
+refetchInterval: (query) => {
+if (query.state.data?.session?.status === 'completed') return false;
+return 5000;
+}
+});
+}
+ 
+export function useEndSessionMutation() {
+const queryClient = useQueryClient();
+return useMutation({
+mutationFn: ({ id }: { id: number }) =>
+fetch(`/api/sessions/${id}/end`, { method: 'POST' }).then(r => r.json()),
+onSuccess: (_, variables) => {
+queryClient.invalidateQueries({ queryKey: ['session', variables.id] });
+}
+});
+}
+ 
+export function useCreateSessionMutation() {
+return useMutation({
+mutationFn: (body: { interviewId: number; candidateName: string }) =>
+fetch('/api/sessions', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(body)
+}).then(r => r.json())
+});
+}
