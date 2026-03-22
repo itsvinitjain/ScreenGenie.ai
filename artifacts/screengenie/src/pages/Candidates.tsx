@@ -11,7 +11,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { UserPlus, Search, Star, Mail, Phone, FileText } from "lucide-react";
+import { UserPlus, Search, Star, Mail, Phone, FileText, Users } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -195,12 +195,23 @@ export default function Candidates() {
                       </td>
                       <td className="px-6 py-4">
                         {candidate.score != null ? (
-                          <div className="flex items-center gap-1.5 font-semibold text-slate-900">
-                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                            {candidate.score}/100
-                          </div>
+                          <span className={cn(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold",
+                            candidate.score >= 70
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : candidate.score >= 50
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                : "bg-red-50 text-red-700 border border-red-200"
+                          )}>
+                            <Star className={cn("w-3.5 h-3.5", 
+                              candidate.score >= 70 ? "fill-emerald-400 text-emerald-400" :
+                              candidate.score >= 50 ? "fill-amber-400 text-amber-400" :
+                              "fill-red-400 text-red-400"
+                            )} />
+                            {candidate.score}
+                          </span>
                         ) : (
-                          <span className="text-sm text-slate-400 italic">Not scored</span>
+                          <span className="text-sm text-slate-400">&mdash;</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-500">

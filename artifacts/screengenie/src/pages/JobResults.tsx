@@ -22,8 +22,43 @@ import {
   X,
   Crown,
   Medal,
+  ChevronDown,
+  ChevronRight,
+  ThumbsUp,
+  TrendingUp,
+  ShieldAlert,
+  Gavel,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function parseFullEvaluation(feedback: string | null | undefined) {
+  if (!feedback) return null;
+  try {
+    const parsed = JSON.parse(feedback);
+    if (parsed._fullEvaluation) return parsed._fullEvaluation;
+    if (parsed.finalVerdict || parsed.scores) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function getVerdictColor(verdict: string) {
+  const v = verdict.toUpperCase();
+  if (v.includes("STRONG HIRE")) return "bg-emerald-100 text-emerald-800 border-emerald-300";
+  if (v === "HIRE") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (v.includes("LEAN HIRE")) return "bg-yellow-50 text-yellow-700 border-yellow-200";
+  if (v.includes("LEAN NO")) return "bg-orange-50 text-orange-700 border-orange-200";
+  if (v.includes("STRONG NO")) return "bg-red-100 text-red-800 border-red-300";
+  if (v.includes("NO HIRE")) return "bg-red-50 text-red-700 border-red-200";
+  return "bg-slate-50 text-slate-600 border-slate-200";
+}
+
+function getScoreBadgeColor(score: number) {
+  if (score >= 70) return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+  if (score >= 50) return "bg-amber-50 text-amber-700 border border-amber-200";
+  return "bg-red-50 text-red-700 border border-red-200";
+}
 
 interface JobResultsProps {
   jobId: number;
@@ -173,6 +208,9 @@ export default function JobResults({ jobId }: JobResultsProps) {
                     Score
                   </th>
                   <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Verdict
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -229,27 +267,38 @@ export default function JobResults({ jobId }: JobResultsProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={cn(
-                                "h-full rounded-full transition-all",
-                                (candidate.score || 0) > 80
-                                  ? "bg-emerald-500"
-                                  : (candidate.score || 0) > 60
-                                    ? "bg-amber-500"
-                                    : "bg-red-500"
-                              )}
-                              style={{ width: `${candidate.score || 0}%` }}
-                            />
+                        {candidate.score != null ? (
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold",
+                              getScoreBadgeColor(candidate.score)
+                            )}>
+                              {candidate.score}
+                            </span>
+                            {isTopTen && (
+                              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                            )}
                           </div>
-                          <span className="text-sm font-bold text-slate-900 tabular-nums">
-                            {candidate.score}/100
-                          </span>
-                          {isTopTen && (
-                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                          )}
-                        </div>
+                        ) : (
+                          <span className="text-sm text-slate-400">&mdash;</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {(() => {
+                          const evalData = parseFullEvaluation(candidate.feedback);
+                          if (evalData?.finalVerdict) {
+                            return (
+                              <span className={cn(
+                                "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border",
+                                getVerdictColor(evalData.finalVerdict)
+                              )}>
+                                <Gavel className="w-3 h-3" />
+                                {evalData.finalVerdict}
+                              </span>
+                            );
+                          }
+                          return <span className="text-xs text-slate-400">&mdash;</span>;
+                        })()}
                       </td>
                       <td className="px-6 py-4">
                         <span
@@ -286,97 +335,240 @@ export default function JobResults({ jobId }: JobResultsProps) {
         </div>
       ) : null}
 
-      <Dialog open={!!reportCandidate} onOpenChange={() => setReportCandidate(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm uppercase">
-                {reportCandidate?.name.charAt(0)}
-              </div>
-              <div>
-                <div className="text-lg">{reportCandidate?.name}</div>
-                <div className="text-xs text-slate-500 font-normal">
-                  {reportCandidate?.email}
-                </div>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
+      <ReportDialog
+        candidate={reportCandidate}
+        onClose={() => setReportCandidate(null)}
+      />
+    </div>
+  );
+}
 
-          {reportCandidate && (
-            <div className="space-y-6 mt-4">
-              <div className="flex items-center gap-6">
-                <div className="flex-1">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">
-                    AI Score
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl font-bold text-slate-900 tabular-nums">
-                      {reportCandidate.score}
-                    </span>
-                    <span className="text-lg text-slate-400">/100</span>
-                    <div className="ml-2">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold",
-                          getStatusColor(reportCandidate.status)
-                        )}
-                      >
-                        {reportCandidate.status === "HIRED" ? (
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        ) : (
-                          <XCircle className="w-3.5 h-3.5" />
-                        )}
-                        {reportCandidate.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mt-2">
-                    <div
-                      className={cn(
-                        "h-full rounded-full",
-                        (reportCandidate.score || 0) > 80
-                          ? "bg-emerald-500"
-                          : (reportCandidate.score || 0) > 60
-                            ? "bg-amber-500"
-                            : "bg-red-500"
-                      )}
-                      style={{ width: `${reportCandidate.score || 0}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
+function ReportDialog({ candidate, onClose }: { candidate: any; onClose: () => void }) {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-indigo-500" />
-                  <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-                    AI Feedback
-                  </h3>
-                </div>
-                <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
-                  <p className="text-sm text-slate-700 leading-relaxed">
-                    {reportCandidate.feedback || "No feedback available."}
-                  </p>
-                </div>
-              </div>
+  const toggleSection = (key: string) => {
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText className="w-4 h-4 text-slate-500" />
-                  <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-                    Interview Transcript
-                  </h3>
-                </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 max-h-64 overflow-y-auto">
-                  <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono leading-relaxed">
-                    {reportCandidate.transcript || "No transcript available."}
-                  </pre>
-                </div>
+  if (!candidate) return null;
+
+  const evalData = parseFullEvaluation(candidate.feedback);
+  const plainFeedback = evalData ? null : candidate.feedback;
+
+  return (
+    <Dialog open={!!candidate} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm uppercase">
+              {candidate.name.charAt(0)}
+            </div>
+            <div>
+              <div className="text-lg">{candidate.name}</div>
+              <div className="text-xs text-slate-500 font-normal">
+                {candidate.email}
+              </div>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-4">
+          <div className="flex items-center gap-6">
+            <div className="flex-1">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">
+                AI Score
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-4xl font-bold text-slate-900 tabular-nums">
+                  {candidate.score}
+                </span>
+                <span className="text-lg text-slate-400">/100</span>
+                {evalData?.finalVerdict && (
+                  <span className={cn(
+                    "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border ml-2",
+                    getVerdictColor(evalData.finalVerdict)
+                  )}>
+                    <Gavel className="w-3.5 h-3.5" />
+                    {evalData.finalVerdict}
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold",
+                    getStatusColor(candidate.status)
+                  )}
+                >
+                  {candidate.status === "HIRED" ? (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <XCircle className="w-3.5 h-3.5" />
+                  )}
+                  {candidate.status}
+                </span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mt-2">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    (candidate.score || 0) >= 70
+                      ? "bg-emerald-500"
+                      : (candidate.score || 0) >= 50
+                        ? "bg-amber-500"
+                        : "bg-red-500"
+                  )}
+                  style={{ width: `${candidate.score || 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {evalData?.feedback && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                  AI Feedback
+                </h3>
+              </div>
+              <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                  {evalData.feedback}
+                </p>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-    </div>
+
+          {!evalData && plainFeedback && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                  AI Feedback
+                </h3>
+              </div>
+              <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  {plainFeedback}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {evalData?.strengths && evalData.strengths.length > 0 && (
+            <div>
+              <button
+                onClick={() => toggleSection("strengths")}
+                className="flex items-center gap-2 mb-3 w-full text-left group"
+              >
+                {expandedSections.strengths ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
+                <ThumbsUp className="w-4 h-4 text-emerald-500" />
+                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                  Strengths
+                </h3>
+                <span className="text-xs text-slate-400 ml-auto">
+                  {evalData.strengths.length} item(s)
+                </span>
+              </button>
+              {expandedSections.strengths && (
+                <ul className="space-y-2 pl-6">
+                  {evalData.strengths.map((s: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {evalData?.improvements && evalData.improvements.length > 0 && (
+            <div>
+              <button
+                onClick={() => toggleSection("improvements")}
+                className="flex items-center gap-2 mb-3 w-full text-left group"
+              >
+                {expandedSections.improvements ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
+                <TrendingUp className="w-4 h-4 text-amber-500" />
+                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                  Areas for Improvement
+                </h3>
+                <span className="text-xs text-slate-400 ml-auto">
+                  {evalData.improvements.length} item(s)
+                </span>
+              </button>
+              {expandedSections.improvements && (
+                <ul className="space-y-2 pl-6">
+                  {evalData.improvements.map((s: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                      <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {evalData?.aiSuspicionReport && (
+            <div>
+              <button
+                onClick={() => toggleSection("suspicion")}
+                className="flex items-center gap-2 mb-3 w-full text-left group"
+              >
+                {expandedSections.suspicion ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
+                <ShieldAlert className="w-4 h-4 text-yellow-600" />
+                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                  AI Suspicion Report
+                </h3>
+              </button>
+              {expandedSections.suspicion && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                  <p className="text-sm text-yellow-800 leading-relaxed whitespace-pre-line">
+                    {evalData.aiSuspicionReport}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <button
+              onClick={() => toggleSection("transcript")}
+              className="flex items-center gap-2 mb-3 w-full text-left group"
+            >
+              {expandedSections.transcript ? (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              )}
+              <FileText className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                Interview Transcript
+              </h3>
+            </button>
+            {expandedSections.transcript && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 max-h-64 overflow-y-auto">
+                <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono leading-relaxed">
+                  {candidate.transcript || "No transcript available."}
+                </pre>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
