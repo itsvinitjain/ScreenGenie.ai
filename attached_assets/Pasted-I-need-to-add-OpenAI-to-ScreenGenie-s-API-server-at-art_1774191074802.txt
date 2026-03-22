@@ -1,0 +1,61 @@
+I need to add OpenAI to ScreenGenie's API server at artifacts/api-server/.
+ 
+Step 1 — install openai package
+Run this in artifacts/api-server/:
+npm install openai
+ 
+Step 2 — create artifacts/api-server/src/lib/openai.ts
+Create this exact file:
+import OpenAI from 'openai';
+if (!process.env.OPENAI_API_KEY) {
+throw new Error('OPENAI_API_KEY must be set');
+}
+export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+ 
+Step 3 — create artifacts/api-server/src/lib/audio.ts
+Create this exact file (textToSpeech using openai.audio.speech, NOT gpt-audio model):
+import { openai } from './openai';
+type TTSVoice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+export async function textToSpeech(text: string, voice: TTSVoice = 'nova', format: 'mp3' | 'wav' = 'mp3'): Promise<Buffer> {
+const mp3 = await openai.audio.speech.create({ model: 'tts-1', voice, input: text, response_format: format });
+const arrayBuffer = await mp3.arrayBuffer();
+return Buffer.from(arrayBuffer);
+}
+export async function ensureCompatibleFormat(audioBuffer: Buffer): Promise<{buffer: Buffer, format: 'wav'|'mp3'}> {
+// webm from browser MediaRecorder — just pass through as webm
+// OpenAI Whisper accepts webm natively
+return { buffer: audioBuffer, format: 'wav' };
+}
+ 
+Step 4 — add OPENAI_API_KEY to .env or Replit secrets
+Make sure OPENAI_API_KEY is available as a process.env variable.
+Do NOT commit this key to git.
+📋  Prompt 2B — copy interviewAI.ts (the AI brain)
+IMPORTANT for Replit AI: interviewAI.ts is 550+ lines. It must be copied in full — do NOT summarize or simplify it. The prompts, the strictness logic, the evaluation function — all of it is load-bearing.
+
+Create artifacts/api-server/src/lib/interviewAI.ts.
+ 
+This file must be copied EXACTLY from the ai-bot-demo reference, with ONE change:
+Replace the top import line:
+FROM: import { openai } from '@workspace/integrations-openai-ai-server';
+TO:   import { openai } from './openai';
+ 
+Also replace the textToSpeech import used inside the sessions route later:
+FROM: import { textToSpeech } from '@workspace/integrations-openai-ai-server/audio';
+TO:   import { textToSpeech } from './audio';
+ 
+Keep ALL of the following functions exactly as-is (do not rewrite, summarize or trim):
+- STRICTNESS_LIMITS, DIFFICULTY_DESCRIPTIONS, CODING_PHASE_QUESTIONS constants
+- getStrictnessLimits(experienceLevel)
+- getInitialStrictness(experienceLevel)
+- buildSystemPrompt(ctx: InterviewContext) — the 200-line GPT system prompt
+- streamInterviewResponse(ctx) — async generator, uses gpt-4o streaming
+- generateEvaluation(ctx) — uses gpt-4o, returns 9-dimension scores
+- analyzeCodeSubmission(code, language, executionOutput, jobDescription)
+- getVoiceForGender(gender) — returns 'echo' for male, 'nova' for female
+- InterviewContext interface
+ 
+The InterviewContext interface must have these fields:
+jobDescription, questions, experienceLevel, durationMinutes, voiceGender,
+candidateName, currentStrictness, questionsAsked, elapsedMinutes,
+conversationHistory, codingEnabled?, remainingMinutes?, candidateTimezone?
