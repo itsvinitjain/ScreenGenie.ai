@@ -76,6 +76,8 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.55.1",
     "papaparse": "^5.5.3"
   }
 }
